@@ -1,0 +1,665 @@
+const SPREADSHEET_ID = '10LOgWOmahCcfV6zeRu94-zxCR7ROUDCiHyX3H8EuvzA';
+
+function doGet(e) {
+  return HtmlService.createTemplateFromFile('Index')
+      .evaluate()
+      .setTitle('ELS Inventory System')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+}
+
+function getSheetByName(sheetName) {
+  return SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(sheetName);
+}
+
+// Fungsi untuk memverifikasi Login
+function prosesLoginServer(username, password) {
+  try {
+    var sheet = getSheetByName("users");
+    var data = sheet.getDataRange().getValues();
+    
+    // Looping data user (lewati baris pertama/header)
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] === username && data[i][1] === password) {
+        return {
+          success: true, 
+          role: data[i][2], 
+          cabang: data[i][3],
+          nama: data[i][0] // Menggunakan username sebagai nama sementara
+        };
+      }
+    }
+    return {success: false, message: "Username atau password salah!"};
+  } catch (error) {
+    return {success: false, message: "Error sistem: " + error.message};
+  }
+}
+
+// ==========================================
+// FUNGSI MANAJEMEN USER (CRUD)
+// ==========================================
+
+// Mendapatkan daftar semua user
+function getUsersServer() {
+  try {
+    var sheet = getSheetByName("users");
+    var data = sheet.getDataRange().getValues();
+    var users = [];
+    
+    // Looping dari baris kedua (lewati header)
+    for (var i = 1; i < data.length; i++) {
+      users.push({
+        username: data[i][0],
+        password: data[i][1], // idealnya tidak dikirim plain text, tapi untuk kebutuhan edit diperlukan
+        role: data[i][2],
+        cabang: data[i][3]
+      });
+    }
+    return {success: true, data: users};
+  } catch (error) {
+    return {success: false, message: "Gagal mengambil data user: " + error.message};
+  }
+}
+
+// Menyimpan (Tambah baru atau Edit) user
+function saveUserServer(userData, isNew, originalUsername) {
+  try {
+    var sheet = getSheetByName("users");
+    var data = sheet.getDataRange().getValues();
+    
+    if (isNew) {
+      // Cek apakah username sudah ada
+      for (var i = 1; i < data.length; i++) {
+        if (data[i][0] === userData.username) {
+          return {success: false, message: "Username sudah digunakan!"};
+        }
+      }
+      // Tambah baris baru
+      sheet.appendRow([userData.username, userData.password, userData.role, userData.cabang]);
+      return {success: true, message: "User berhasil ditambahkan!"};
+    } else {
+      // Proses Edit
+      for (var i = 1; i < data.length; i++) {
+        if (data[i][0] === originalUsername) {
+          // Update baris ini (index + 1 karena getRange 1-indexed)
+          sheet.getRange(i + 1, 1, 1, 4).setValues([[userData.username, userData.password, userData.role, userData.cabang]]);
+          return {success: true, message: "User berhasil diperbarui!"};
+        }
+      }
+      return {success: false, message: "User tidak ditemukan untuk diupdate!"};
+    }
+  } catch (error) {
+    return {success: false, message: "Gagal menyimpan user: " + error.message};
+  }
+}
+
+// Menghapus user
+function deleteUserServer(username) {
+  try {
+    var sheet = getSheetByName("users");
+    var data = sheet.getDataRange().getValues();
+    
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] === username) {
+        sheet.deleteRow(i + 1);
+        return {success: true, message: "User berhasil dihapus!"};
+      }
+    }
+    return {success: false, message: "User tidak ditemukan!"};
+  } catch (error) {
+    return {success: false, message: "Gagal menghapus user: " + error.message};
+  }
+}
+
+// ==========================================
+// FUNGSI DASHBOARD STATISTIK
+// ==========================================
+function getDashboardStatsServer() {
+  try {
+    // Hitung Total Cabang (Unik)
+    var userSheet = getSheetByName("users");
+    var userData = userSheet.getDataRange().getValues();
+    var uniqueCabang = [];
+    
+    // Looping dari baris kedua (lewati header)
+    for (var i = 1; i < userData.length; i++) {
+      var cabang = userData[i][3].toString().trim().toLowerCase();
+      // Jangan hitung jika kosong atau belum ada di list uniqueCabang
+      if (cabang && uniqueCabang.indexOf(cabang) === -1) {
+        uniqueCabang.push(cabang);
+      }
+    }
+    
+    // Hitung jumlah barang SN MASUK hari ini dan rekap frekuensi Part
+    var snSheet = getSheetByName("sn_masuk");
+    var snData = snSheet.getDataRange().getValues();
+    var snMasukHariIni = 0;
+    
+    // Untuk Top 15
+    var partFreq = {}; // key: kode_barang, value: {nama, count}
+    
+    // Dapatkan tanggal hari ini (tanpa jam)
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (var j = 1; j < snData.length; j++) {
+      var rowDate = snData[j][0];
+      var kodePart = snData[j][2];
+      var namaPart = snData[j][3];
+      
+      // Rekap Frekuensi Part
+      if (kodePart) {
+        if (!partFreq[kodePart]) {
+          partFreq[kodePart] = {nama: namaPart, count: 0};
+        }
+        partFreq[kodePart].count++;
+      }
+      
+      if (rowDate instanceof Date) {
+        var d = new Date(rowDate);
+        d.setHours(0, 0, 0, 0);
+        
+        // Jika tanggalnya sama dengan hari ini
+        if (d.getTime() === today.getTime()) {
+          var snString = snData[j][4]; // Kolom Serial Number (indeks 4)
+          if (snString) {
+             var sns = snString.toString().split(/[\n,]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s !== ""; });
+             snMasukHariIni += sns.length;
+          }
+        }
+      }
+    }
+    
+    // Ambil Master Barang untuk mendapatkan stok saat ini
+    var mbSheet = getSheetByName("master_barang");
+    var mbData = mbSheet.getDataRange().getValues();
+    var stockMap = {};
+    for (var k = 1; k < mbData.length; k++) {
+      var kBarang = mbData[k][0];
+      var stok = parseInt(mbData[k][3]) || 0;
+      if (kBarang) {
+        stockMap[kBarang] = stok;
+      }
+    }
+    
+    // Gabungkan freq dan stok, lalu urutkan
+    var topPartsArray = [];
+    for (var key in partFreq) {
+      topPartsArray.push({
+        kode: key,
+        nama: partFreq[key].nama,
+        frekuensi: partFreq[key].count,
+        stok: stockMap[key] || 0
+      });
+    }
+    
+    // Urutkan berdasarkan frekuensi (descending)
+    topPartsArray.sort(function(a, b) {
+      return b.frekuensi - a.frekuensi;
+    });
+    
+    // Ambil hanya 15 teratas
+    var top15 = topPartsArray.slice(0, 15);
+    
+    return {
+      success: true,
+      data: {
+        totalCabang: uniqueCabang.length,
+        snMasukHariIni: snMasukHariIni,
+        topParts: top15
+      }
+    };
+  } catch (error) {
+    return {success: false, message: "Gagal mengambil statistik: " + error.message};
+  }
+}
+
+// ==========================================
+// FUNGSI BUAT SN MASUK
+// ==========================================
+
+// Mengambil list barang untuk dropdown
+function getMasterBarangServer() {
+  try {
+    var sheet = getSheetByName("master_barang");
+    var data = sheet.getDataRange().getValues();
+    var listBarang = [];
+    
+    // Asumsi: Kolom A = Kode Barang, Kolom B = Nama Barang
+    // Sesuaikan indeks jika berbeda. Disini kita pakai indeks 0 dan 1.
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] !== "" && data[i][1] !== "") {
+        listBarang.push({
+          kode: data[i][0].toString().trim(),
+          nama: data[i][1].toString().trim(),
+          serial_number: data[i][2].toString().trim(),
+          stok: parseInt(data[i][3]) || 0,
+          harga_modal: parseFloat(data[i][4]) || 0,
+          harga_jual: parseFloat(data[i][5]) || 0
+        });
+      }
+    }
+    return {success: true, data: listBarang};
+  } catch (error) {
+    return {success: false, message: "Gagal memuat Master Barang: " + error.message};
+  }
+}
+
+// Mengambil nomor urut terakhir berdasarkan prefix (misal: ADP-AC-260817)
+function getLastSequenceServer(prefix) {
+  try {
+    var sheet = getSheetByName("sn_masuk");
+    var data = sheet.getDataRange().getValues();
+    var maxSeq = 0;
+    
+    // Asumsi: SN ada di kolom E (indeks 4)
+    for (var i = 1; i < data.length; i++) {
+      var snString = data[i][4];
+      if (snString) {
+        // Karena 1 cell bisa berisi banyak SN dipisah koma/newline
+        var snArray = snString.toString().split(/[\n,]+/);
+        for (var j = 0; j < snArray.length; j++) {
+          var sn = snArray[j].trim();
+          if (sn.indexOf(prefix) === 0) {
+            // Ekstrak 3 digit terakhir
+            var seqStr = sn.substring(prefix.length);
+            if (!isNaN(seqStr)) {
+              var seq = parseInt(seqStr, 10);
+              if (seq > maxSeq) {
+                maxSeq = seq;
+              }
+            }
+          }
+        }
+      }
+    }
+    return {success: true, lastSequence: maxSeq};
+  } catch (error) {
+    return {success: false, message: "Gagal mencari nomor urut: " + error.message, lastSequence: 0};
+  }
+}
+
+// Menyimpan data SN Masuk ke sheet sn_masuk
+function saveSNMasukServer(items) {
+  try {
+    var sheet = getSheetByName("sn_masuk");
+    var mbSheet = getSheetByName("master_barang");
+    var mbData = mbSheet.getDataRange().getValues();
+    
+    // items adalah array dari object yang akan ditambahkan ke baris baru
+    // Kolom: tanggal, no_nota, kode_barang, nama_barang, serial_number, catatan, alokasi_part
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      
+      // Simpan ke sn_masuk
+      sheet.appendRow([
+        item.tanggal,
+        item.no_nota,
+        item.kode_barang,
+        item.nama_barang,
+        item.serial_number,
+        item.catatan,
+        item.alokasi_part
+      ]);
+      
+      // Update data di master_barang
+      var snsToAdd = item.serial_number ? item.serial_number.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s !== ""; }) : [];
+      if (snsToAdd.length > 0) {
+        for (var j = 1; j < mbData.length; j++) {
+          if (mbData[j][0] == item.kode_barang) {
+            var existingSNStr = mbData[j][2] ? mbData[j][2].toString() : "";
+            var existingSNs = existingSNStr.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s !== ""; });
+            
+            // Gabungkan SN lama dan SN baru
+            var newSNs = existingSNs.concat(snsToAdd);
+            var newSNStr = newSNs.join(",\n");
+            var newStok = newSNs.length;
+            
+            // Kolom C (indeks 3) = Serial Number, Kolom D (indeks 4) = Stok
+            mbSheet.getRange(j + 1, 3).setValue(newSNStr);
+            mbSheet.getRange(j + 1, 4).setValue(newStok);
+            
+            // Update in-memory data untuk antisipasi duplicate kode_barang di items yang sama
+            mbData[j][2] = newSNStr;
+            mbData[j][3] = newStok;
+            break;
+          }
+        }
+      }
+    }
+    
+    return {success: true, message: "Data SN berhasil disimpan dan stok Master Barang terupdate!"};
+  } catch (error) {
+    return {success: false, message: "Gagal menyimpan data SN: " + error.message};
+  }
+}
+
+// Mendapatkan daftar cabang unik dari sheet users
+function getCabangsServer() {
+  try {
+    var sheet = getSheetByName("users");
+    var data = sheet.getDataRange().getValues();
+    var cabangs = {};
+    var uniqueCabangs = [];
+    
+    // Looping dari baris kedua (lewati header)
+    for (var i = 1; i < data.length; i++) {
+      var cabang = data[i][3];
+      if (cabang && cabang !== "") {
+        cabang = cabang.toString().trim().toUpperCase();
+        if (!cabangs[cabang]) {
+          cabangs[cabang] = true;
+          uniqueCabangs.push(cabang);
+        }
+      }
+    }
+    return {success: true, data: uniqueCabangs};
+  } catch (error) {
+    return {success: false, message: "Error memuat cabang: " + error.message};
+  }
+}
+
+// Mendapatkan data SN Masuk dari sheet
+function getSNMasukServer() {
+  try {
+    var sheet = getSheetByName("sn_masuk");
+    var data = sheet.getDataRange().getValues();
+    var result = [];
+    
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      // Jika baris kosong, lewati
+      if (!row[0] && !row[1]) continue;
+      
+      var tgl = row[0];
+      if (tgl instanceof Date) {
+        var d = tgl.getDate();
+        var m = tgl.toLocaleString('id-ID', { month: 'short' });
+        var y = tgl.getFullYear();
+        tgl = d + " " + m + " " + y;
+      } else if (tgl) {
+        // Fallback jika berupa text string (meski sebaiknya date object di sheets)
+        tgl = tgl.toString().substring(0, 15); 
+      }
+      
+      var snString = row[4] ? String(row[4]) : "";
+      var snCount = snString ? snString.split(',').length : 0;
+      
+      result.push({
+        tanggal: tgl,
+        no_nota: row[1],
+        kode_barang: row[2],
+        nama_barang: row[3],
+        serial_number: snString,
+        catatan: row[5],
+        alokasi_part: row[6],
+        jml_sn: snCount
+      });
+    }
+    
+    return {success: true, data: result.reverse()}; // Data terbaru di atas
+  } catch (error) {
+    return {success: false, message: "Error memuat data SN Masuk: " + error.message};
+  }
+}
+
+// Menghapus nota beserta seluruh baris datanya dari sn_masuk dan menarik kembali stok dari master_barang
+function deleteNotaMasukServer(noNota) {
+  try {
+    var sheet = getSheetByName("sn_masuk");
+    var data = sheet.getDataRange().getValues();
+    
+    // 1. Kumpulkan data SN yang akan ditarik dari master_barang
+    var snsToRemoveMap = {};
+    var deletedCount = 0;
+    var rowsToDelete = [];
+    
+    // Looping dari bawah ke atas
+    for (var i = data.length - 1; i >= 1; i--) {
+      if (data[i][1] === noNota) { // Kolom ke-2 (index 1) adalah no_nota
+        var kodeBarang = data[i][2]; // Kolom ke-3 (index 2) adalah kode_barang
+        var snString = data[i][4]; // Kolom ke-5 (index 4) adalah serial_number
+        
+        if (kodeBarang && snString) {
+          var snList = snString.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s !== ""; });
+          if (!snsToRemoveMap[kodeBarang]) {
+            snsToRemoveMap[kodeBarang] = [];
+          }
+          snsToRemoveMap[kodeBarang] = snsToRemoveMap[kodeBarang].concat(snList);
+        }
+        
+        rowsToDelete.push(i + 1); // Simpan nomor baris untuk dihapus nanti
+        deletedCount++;
+      }
+    }
+    
+    if (deletedCount === 0) {
+      return {success: false, message: `Nota ${noNota} tidak ditemukan.`};
+    }
+    
+    // 2. Update master_barang dengan menarik/menghapus SN yang terkait
+    var mbSheet = getSheetByName("master_barang");
+    var mbData = mbSheet.getDataRange().getValues();
+    
+    for (var j = 1; j < mbData.length; j++) {
+      var kBarang = mbData[j][0];
+      if (snsToRemoveMap[kBarang] && snsToRemoveMap[kBarang].length > 0) {
+        var removeList = snsToRemoveMap[kBarang];
+        var existingSNStr = mbData[j][2] ? mbData[j][2].toString() : "";
+        var existingSNs = existingSNStr.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s !== ""; });
+        
+        // Buang SN yang ada di removeList
+        var newSNs = existingSNs.filter(function(sn) {
+          return removeList.indexOf(sn) === -1;
+        });
+        
+        var newSNStr = newSNs.join(",\n");
+        var newStok = newSNs.length;
+        
+        // Tulis ulang ke sheet master_barang (Kolom C = SN, Kolom D = Stok)
+        mbSheet.getRange(j + 1, 3).setValue(newSNStr);
+        mbSheet.getRange(j + 1, 4).setValue(newStok);
+      }
+    }
+    
+    // 3. Hapus baris dari sn_masuk (aman karena urutan array rowsToDelete dari indeks terbesar)
+    for (var k = 0; k < rowsToDelete.length; k++) {
+      sheet.deleteRow(rowsToDelete[k]);
+    }
+    
+    return {success: true, message: `Berhasil menghapus nota ${noNota} dan menarik kembali SN dari Master Barang!`};
+  } catch (error) {
+    return {success: false, message: "Error menghapus nota: " + error.message};
+  }
+}
+
+// Mengubah catatan pada data SN Masuk
+function updateCatatanMasukServer(noNota, newCatatan) {
+  try {
+    var sheet = getSheetByName("sn_masuk");
+    var data = sheet.getDataRange().getValues();
+    
+    var updatedCount = 0;
+    // Mulai dari 1 untuk melewati header
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][1] === noNota) { // Kolom ke-2 (index 1) adalah no_nota
+        sheet.getRange(i + 1, 6).setValue(newCatatan); // Kolom F (Catatan) adalah kolom ke-6
+        updatedCount++;
+      }
+    }
+    
+    if (updatedCount > 0) {
+      return {success: true, message: "Catatan berhasil diperbarui"};
+    } else {
+      return {success: false, message: "Nota tidak ditemukan."};
+    }
+  } catch (error) {
+    return {success: false, message: "Error memperbarui catatan: " + error.message};
+  }
+}
+
+// ==========================================
+// FUNGSI STOCK OPNAME
+// ==========================================
+
+function getOpnameDataServer() {
+  try {
+    var sheet = getSheetByName("opname");
+    var data = sheet.getDataRange().getValues();
+    var listOpname = [];
+    
+    // Kolom: A=0 (kode), B=1 (nama), C=2 (sn), D=3 (tanggal)
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] !== "") {
+        listOpname.push({
+          kode: data[i][0].toString().trim(),
+          nama: data[i][1].toString().trim(),
+          serial_number: data[i][2].toString().trim(),
+          tanggal: data[i][3] instanceof Date ? Utilities.formatDate(data[i][3], Session.getScriptTimeZone(), "dd-MM-yyyy") : data[i][3].toString(),
+          status: (data[i][4] && data[i][4] !== "") ? data[i][4].toString().trim() : "Belum Scan"
+        });
+      }
+    }
+    return {success: true, data: listOpname};
+  } catch (error) {
+    return {success: false, message: "Gagal memuat data Opname: " + error.message};
+  }
+}
+
+// Mengganti seluruh data opname dengan data baru hasil import
+function importOpnameDataServer(dataArray) {
+  try {
+    var sheet = getSheetByName("opname");
+    var lastRow = sheet.getLastRow();
+    
+    // Hapus data lama (mulai dari baris ke-2 ke bawah)
+    if (lastRow > 1) {
+      sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
+    }
+    
+    if (!dataArray || dataArray.length === 0) {
+      return {success: true, message: "Berhasil mengosongkan data opname (tidak ada data baru)."};
+    }
+    
+    // Siapkan array 2D untuk ditulis ke sheet sekaligus (agar cepat)
+    var rows = dataArray.map(function(item) {
+      return [item.kode, item.nama, item.sn, item.tanggal];
+    });
+    
+    // Tulis ke sheet: mulai dari baris ke-2, kolom ke-1, sebanyak row, selebar 4 kolom
+    sheet.getRange(2, 1, rows.length, 4).setValues(rows);
+    
+    return {success: true, message: "Berhasil mengimport " + rows.length + " baris data stok opname!"};
+  } catch (error) {
+    return {success: false, message: "Gagal import data: " + error.message};
+  }
+}
+
+// ==========================================
+// FUNGSI IMPORT STOK SERI
+// ==========================================
+
+function importStokSeriServer(parsedData) {
+  try {
+    if (!parsedData || parsedData.length === 0) {
+      return {success: false, message: "Data kosong."};
+    }
+    
+    var mbSheet = getSheetByName("master_barang");
+    var mbData = mbSheet.getDataRange().getValues();
+    
+    // Group parsedData by kodeBarang untuk efisiensi
+    var importMap = {};
+    for (var i = 0; i < parsedData.length; i++) {
+      var kode = parsedData[i].kodeBarang;
+      var sn = parsedData[i].sn;
+      if (!importMap[kode]) {
+        importMap[kode] = [];
+      }
+      importMap[kode].push(sn);
+    }
+    
+    var updatedRows = 0;
+    var snAdded = 0;
+    
+    // Loop master_barang untuk update
+    for (var j = 1; j < mbData.length; j++) {
+      var kBarang = mbData[j][0];
+      
+      if (kBarang && importMap[kBarang]) {
+        var existingSNStr = mbData[j][2] ? mbData[j][2].toString() : "";
+        var existingSNs = existingSNStr.split(/[\n,]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s !== ""; });
+        
+        var newSNsToAdd = importMap[kBarang];
+        var addedForThisItem = 0;
+        
+        // Cek duplikat dan tambahkan ke existingSNs
+        for (var k = 0; k < newSNsToAdd.length; k++) {
+          var snBaru = newSNsToAdd[k];
+          if (existingSNs.indexOf(snBaru) === -1) { // Jika belum ada (skip duplikat)
+            existingSNs.push(snBaru);
+            addedForThisItem++;
+            snAdded++;
+          }
+        }
+        
+        if (addedForThisItem > 0) {
+          var newSNStr = existingSNs.join(",\n");
+          var newStok = existingSNs.length;
+          
+          // Kolom C = SN (indeks 3), Kolom D = Stok (indeks 4)
+          mbSheet.getRange(j + 1, 3).setValue(newSNStr);
+          mbSheet.getRange(j + 1, 4).setValue(newStok);
+          
+          updatedRows++;
+        }
+      }
+    }
+    
+    return {
+      success: true, 
+      message: `Berhasil mengupdate ${updatedRows} barang dengan total ${snAdded} SN baru (SN duplikat diabaikan).`
+    };
+    
+  } catch (error) {
+    return {success: false, message: "Gagal memproses import stok: " + error.message};
+  }
+}
+
+// ==========================================
+// FUNGSI SIMPAN STATUS OPNAME
+// ==========================================
+
+function simpanOpnameServer(opnameData) {
+  try {
+    var sheet = getSheetByName("opname");
+    var data = sheet.getDataRange().getValues();
+    
+    // Buat map SN -> Status untuk pencarian cepat
+    var statusMap = {};
+    for (var i = 0; i < opnameData.length; i++) {
+      var sn = opnameData[i].serial_number.toString().trim().toLowerCase();
+      statusMap[sn] = opnameData[i].status;
+    }
+    
+    // Siapkan array 2D untuk update kolom status (kolom E / indeks 5 -> 1-based, array getRange(row, 5))
+    var statusValues = [];
+    
+    // Mulai dari 1 untuk melewati header
+    for (var j = 1; j < data.length; j++) {
+      var snSheet = data[j][2].toString().trim().toLowerCase(); // Kolom C (index 2)
+      if (statusMap[snSheet]) {
+        statusValues.push([statusMap[snSheet]]);
+      } else {
+        statusValues.push([data[j][4] || ""]); // biarkan apa adanya jika tak ketemu
+      }
+    }
+    
+    if (statusValues.length > 0) {
+      sheet.getRange(2, 5, statusValues.length, 1).setValues(statusValues);
+    }
+    
+    return {success: true, message: "Status opname berhasil disimpan ke database!"};
+  } catch (error) {
+    return {success: false, message: "Gagal menyimpan status: " + error.message};
+  }
+}
