@@ -579,45 +579,44 @@ function importStokSeriServer(parsedData) {
     }
     
     var updatedRows = 0;
-    var snAdded = 0;
+    var totalSNsSynced = 0;
     
     // Loop master_barang untuk update
     for (var j = 1; j < mbData.length; j++) {
       var kBarang = mbData[j][0];
       
-      if (kBarang && importMap[kBarang]) {
+      if (kBarang) {
         var existingSNStr = mbData[j][2] ? mbData[j][2].toString() : "";
-        var existingSNs = existingSNStr.split(/[\n,]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s !== ""; });
+        var existingStok = existingSNStr ? existingSNStr.split(/[\n,]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s !== ""; }).length : 0;
         
-        var newSNsToAdd = importMap[kBarang];
-        var addedForThisItem = 0;
+        var newSNsList = importMap[kBarang] || [];
         
-        // Cek duplikat dan tambahkan ke existingSNs
-        for (var k = 0; k < newSNsToAdd.length; k++) {
-          var snBaru = newSNsToAdd[k];
-          if (existingSNs.indexOf(snBaru) === -1) { // Jika belum ada (skip duplikat)
-            existingSNs.push(snBaru);
-            addedForThisItem++;
-            snAdded++;
+        // Buang duplikat dari file Excel
+        var uniqueNewSNs = [];
+        for (var k = 0; k < newSNsList.length; k++) {
+          var snBaru = newSNsList[k].toString().trim();
+          if (snBaru !== "" && uniqueNewSNs.indexOf(snBaru) === -1) {
+            uniqueNewSNs.push(snBaru);
           }
         }
         
-        if (addedForThisItem > 0) {
-          var newSNStr = existingSNs.join(",\n");
-          var newStok = existingSNs.length;
-          
-          // Kolom C = SN (indeks 3), Kolom D = Stok (indeks 4)
+        var newSNStr = uniqueNewSNs.join(",\n");
+        var newStok = uniqueNewSNs.length;
+        
+        // Bandingkan apakah ada perubahan (ganti total isi sel)
+        if (existingSNStr !== newSNStr || existingStok !== newStok) {
           mbSheet.getRange(j + 1, 3).setValue(newSNStr);
           mbSheet.getRange(j + 1, 4).setValue(newStok);
           
           updatedRows++;
+          totalSNsSynced += newStok;
         }
       }
     }
     
     return {
       success: true, 
-      message: `Berhasil mengupdate ${updatedRows} barang dengan total ${snAdded} SN baru (SN duplikat diabaikan).`
+      message: `Berhasil tersinkronisasi. ${updatedRows} barang diupdate menjadi total ${totalSNsSynced} SN (SN yang tidak ada di file telah dihapus).`
     };
     
   } catch (error) {
