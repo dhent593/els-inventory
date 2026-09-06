@@ -29,7 +29,37 @@ Karena aplikasi ini dibangun di atas ekosistem Google Workspace, instalasinya di
 
 1. **Siapkan Database**:
    - Buat file **Google Sheets** baru di Google Drive Anda.
-   - Buat beberapa *sheet* / *tab* sesuai dengan kebutuhan aplikasi (misal: `master_barang`, `opname`, dll).
+   - Buat 4 buah *sheet* (tab di bagian bawah) dengan nama dan urutan kolom (Header di baris 1) sebagai berikut:
+     
+     **a. Sheet `users`** (Digunakan untuk akses login)
+     - Kolom A: `Username`
+     - Kolom B: `Password`
+     - Kolom C: `Role` (misal: ADMIN, PUSAT)
+     - Kolom D: `Cabang`
+     
+     **b. Sheet `master_barang`** (Pusat data stok dan harga)
+     - Kolom A: `Kode Barang`
+     - Kolom B: `Nama Barang`
+     - Kolom C: `Serial Number` (Kumpulan SN yang ada)
+     - Kolom D: `Stok` (Angka jumlah stok)
+     - Kolom E: `Harga Modal`
+     - Kolom F: `Harga Jual`
+     
+     **c. Sheet `sn_masuk`** (Pencatatan riwayat barang masuk)
+     - Kolom A: `Tanggal`
+     - Kolom B: `No Nota`
+     - Kolom C: `Kode Barang`
+     - Kolom D: `Nama Barang`
+     - Kolom E: `Serial Number`
+     - Kolom F: `Catatan`
+     - Kolom G: `Alokasi Part`
+     
+     **d. Sheet `opname`** (Pencatatan proses Stock Opname)
+     - Kolom A: `Kode Barang`
+     - Kolom B: `Nama Barang`
+     - Kolom C: `Serial Number`
+     - Kolom D: `Tanggal Masuk`
+     - Kolom E: `Status` (misal: Belum Scan, ADA)
 
 2. **Buka Apps Script**:
    - Dari dalam Google Sheets tersebut, klik menu **Extensions (Ekstensi)** > **Apps Script**.
