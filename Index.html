@@ -243,9 +243,25 @@
             <span class="font-bold">Riwayat SN</span>
           </button>
           
+          <!-- MENU KHUSUS CABANG -->
+          <button type="button" onclick="switchView('request-part')" id="nav-request-part" class="sidebar-item hidden flex items-center gap-4 px-6 py-3 text-[14px] w-full text-left">
+            <i class="fa-solid fa-paper-plane w-5 text-center"></i>
+            <span class="font-bold">Request Part</span>
+          </button>
+
+          <button type="button" onclick="switchView('riwayat-request')" id="nav-riwayat-request" class="sidebar-item hidden flex items-center gap-4 px-6 py-3 text-[14px] w-full text-left">
+            <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
+            <span class="font-bold">Riwayat Request</span>
+          </button>
+          
           <button type="button" onclick="switchView('opname')" id="nav-opname" class="sidebar-item flex items-center gap-4 px-6 py-3 text-[14px] w-full text-left">
             <i class="fa-solid fa-clipboard-check w-5 text-center"></i>
             <span class="font-bold">Stock Opname</span>
+          </button>
+          
+          <button type="button" onclick="switchView('retur')" id="nav-retur" class="sidebar-item flex items-center gap-4 px-6 py-3 text-[14px] w-full text-left">
+            <i class="fa-solid fa-rotate-left w-5 text-center"></i>
+            <span class="font-bold">Retur Part</span>
           </button>
         </nav>
       </div>
@@ -496,12 +512,18 @@
         <div id="view-stock" class="view-section hidden">
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-6">
             <!-- Import Buttons -->
-            <div class="flex flex-col md:flex-row gap-4 mb-6">
-              <button class="flex-1 border-2 border-dashed border-blue-200 bg-blue-50/50 hover:bg-blue-50 text-blue-600 rounded-xl py-4 flex items-center justify-center gap-3 transition-colors">
-                <div class="w-10 h-10 rounded bg-blue-600 text-white flex items-center justify-center font-bold text-lg"><i class="fa-regular fa-file-excel"></i></div>
-                <div class="text-left">
-                  <div class="font-bold text-sm md:text-base">Import Pembelian</div>
-                  <div class="text-[11px] md:text-xs text-blue-400">Klik untuk upload file excel</div>
+            <div id="stock-import-container" class="flex flex-col md:flex-row gap-4 mb-6">
+              <input type="file" id="import-pembelian-file" accept=".xlsx, .xls" class="hidden" onchange="processImportPembelian(event)">
+              <button 
+                onclick="document.getElementById('import-pembelian-file').click()" 
+                ondragover="event.preventDefault(); this.classList.add('bg-blue-100');" 
+                ondragleave="this.classList.remove('bg-blue-100');" 
+                ondrop="event.preventDefault(); this.classList.remove('bg-blue-100'); document.getElementById('import-pembelian-file').files = event.dataTransfer.files; processImportPembelian({target: document.getElementById('import-pembelian-file')});"
+                class="flex-1 border-2 border-dashed border-blue-200 bg-blue-50/50 hover:bg-blue-50 text-blue-600 rounded-xl py-4 flex items-center justify-center gap-3 transition-colors">
+                <div class="w-10 h-10 rounded bg-blue-600 text-white flex items-center justify-center font-bold text-lg pointer-events-none"><i class="fa-regular fa-file-excel"></i></div>
+                <div class="text-left pointer-events-none">
+                  <div class="font-bold text-sm md:text-base">SN Masuk Pembelian</div>
+                  <div class="text-[11px] md:text-xs text-blue-400">Klik atau drop file excel di sini</div>
                 </div>
               </button>
               <input type="file" id="import-seri-file" accept=".xlsx, .xls" class="hidden" onchange="processImportSeri(event)">
@@ -514,8 +536,22 @@
                 class="flex-1 border-2 border-dashed border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 text-emerald-600 rounded-xl py-4 flex items-center justify-center gap-3 transition-colors">
                 <div class="w-10 h-10 rounded bg-emerald-500 text-white flex items-center justify-center font-bold text-lg pointer-events-none"><i class="fa-regular fa-file-excel"></i></div>
                 <div class="text-left pointer-events-none">
-                  <div class="font-bold text-sm md:text-base">Import Stok Seri</div>
+                  <div class="font-bold text-sm md:text-base">Stock Nomor Seri/Produksi per Barang</div>
                   <div class="text-[11px] md:text-xs text-emerald-400">Klik atau drop file excel di sini</div>
+                </div>
+              </button>
+              
+              <input type="file" id="update-harga-file" accept=".xlsx, .xls" class="hidden" onchange="processUpdateHarga(event)">
+              <button 
+                onclick="document.getElementById('update-harga-file').click()" 
+                ondragover="event.preventDefault(); this.classList.add('bg-purple-100');" 
+                ondragleave="this.classList.remove('bg-purple-100');" 
+                ondrop="event.preventDefault(); this.classList.remove('bg-purple-100'); document.getElementById('update-harga-file').files = event.dataTransfer.files; processUpdateHarga({target: document.getElementById('update-harga-file')});"
+                class="flex-1 border-2 border-dashed border-purple-200 bg-purple-50/50 hover:bg-purple-50 text-purple-600 rounded-xl py-4 flex items-center justify-center gap-3 transition-colors">
+                <div class="w-10 h-10 rounded bg-purple-600 text-white flex items-center justify-center font-bold text-lg pointer-events-none"><i class="fa-solid fa-tags"></i></div>
+                <div class="text-left pointer-events-none">
+                  <div class="font-bold text-sm md:text-base">Laporan Detail Pembelian</div>
+                  <div class="text-[11px] md:text-xs text-purple-400">Klik atau drop file excel di sini</div>
                 </div>
               </button>
             </div>
@@ -536,6 +572,7 @@
                     <th class="py-3 px-4 border-b border-gray-200 text-right">Harga Modal <i class="fa-solid fa-sort text-gray-400 ml-1"></i></th>
                     <th class="py-3 px-4 border-b border-gray-200 text-right">Harga Jual <i class="fa-solid fa-sort text-gray-400 ml-1"></i></th>
                     <th class="py-3 px-4 border-b border-gray-200 text-center">Stok <i class="fa-solid fa-sort text-gray-400 ml-1"></i></th>
+                    <th id="th-stock-action" class="py-3 px-4 border-b border-gray-200 text-center" style="display: none;"><i class="fa-solid fa-cart-plus"></i></th>
                   </tr>
                 </thead>
                 <tbody id="tbl-stock-body" class="divide-y divide-gray-100 text-gray-600">
@@ -616,6 +653,139 @@
             <p class="text-gray-500">Halaman Riwayat SN Keluar sedang dalam pengembangan...</p>
           </div>
         </div>
+        <!-- VIEW: DASHBOARD CABANG -->
+        <div id="view-dashboard-cabang" class="view-section hidden">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5">
+              <div class="w-14 h-14 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-2xl">
+                <i class="fa-solid fa-list-check"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 font-medium">Total Request Bulan Ini</p>
+                <h3 class="text-2xl font-bold text-gray-800" id="dash-cabang-total">-</h3>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5">
+              <div class="w-14 h-14 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-2xl">
+                <i class="fa-solid fa-spinner"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 font-medium">Dalam Proses</p>
+                <h3 class="text-2xl font-bold text-gray-800" id="dash-cabang-proses">-</h3>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5">
+              <div class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl">
+                <i class="fa-solid fa-check-circle"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 font-medium">Selesai</p>
+                <h3 class="text-2xl font-bold text-gray-800" id="dash-cabang-selesai">-</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: REQUEST PART (CABANG) -->
+        <div id="view-request-part" class="view-section hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 w-full">
+            <h3 class="text-lg font-bold mb-4">Buat Request Part Baru</h3>
+            <div class="flex flex-col lg:flex-row gap-6">
+              
+              <!-- Form Kiri -->
+              <div class="w-full lg:w-1/3">
+                <form id="form-request-part" onsubmit="event.preventDefault(); addToCart();">
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Barang (Dari Master)</label>
+                    <input list="req-datalist-barang" id="req-kode-barang" onchange="reqPartSelectChange()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Ketik nama atau kode barang..." autocomplete="off">
+                    <datalist id="req-datalist-barang">
+                      <!-- Opsi diisi via JS -->
+                    </datalist>
+                  </div>
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang Custom</label>
+                    <input type="text" id="req-custom-nama" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Jika barang tidak ada di master...">
+                  </div>
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah (Qty) *</label>
+                      <input type="number" id="req-qty" required min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" placeholder="1">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+                      <input type="text" id="req-catatan" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Opsional...">
+                    </div>
+                  </div>
+                  <div class="flex justify-end mt-4">
+                    <button type="submit" id="btn-add-cart" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2 w-full justify-center">
+                      <i class="fa-solid fa-cart-plus"></i> Tambah ke Keranjang
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Tabel Keranjang Kanan -->
+              <div class="w-full lg:w-2/3 flex flex-col">
+                <div class="border border-gray-200 rounded-lg overflow-hidden flex-1 flex flex-col">
+                  <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <span class="font-bold text-gray-700">Keranjang Request</span>
+                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full" id="cart-count">0 Item</span>
+                  </div>
+                  <div class="overflow-x-auto flex-1 p-0 min-h-[200px]">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                      <thead class="bg-white border-b border-gray-100 text-gray-500 text-xs uppercase">
+                        <tr>
+                          <th class="py-2 px-4">Kode</th>
+                          <th class="py-2 px-4">Nama Barang</th>
+                          <th class="py-2 px-4 w-16 text-center">Qty</th>
+                          <th class="py-2 px-4">Catatan</th>
+                          <th class="py-2 px-4 w-10 text-center"><i class="fa-solid fa-trash text-red-400"></i></th>
+                        </tr>
+                      </thead>
+                      <tbody id="tbl-cart-body" class="divide-y divide-gray-100 text-gray-600 bg-white">
+                        <tr><td colspan="5" class="py-6 text-center text-gray-400">Keranjang kosong.</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="mt-4 flex justify-end">
+                  <button type="button" id="btn-submit-req" onclick="submitRequestPart()" disabled class="bg-primary hover:bg-primaryHover text-white px-6 py-3 rounded-lg font-bold transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-paper-plane"></i> Kirim Semua Request
+                  </button>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: RIWAYAT REQUEST -->
+        <div id="view-riwayat-request" class="view-section hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <input type="text" id="search-riwayat-req" onkeyup="filterRiwayatReq()" class="border border-gray-300 rounded-lg px-4 py-2 text-sm w-full md:w-[300px] outline-none focus:border-primary bg-gray-50/50" placeholder="Cari ID atau Barang...">
+              <button onclick="loadRiwayatRequest()" class="border border-gray-300 rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-50 w-full md:w-auto"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm mb-4 whitespace-nowrap">
+                <thead class="border-y border-gray-200 text-gray-700 font-semibold text-xs bg-gray-50/50">
+                  <tr>
+                    <th class="py-3 px-4">Tanggal</th>
+                    <th class="py-3 px-4">ID Request</th>
+                    <th class="py-3 px-4">Cabang</th>
+                    <th class="py-3 px-4">Kode/Nama Barang</th>
+                    <th class="py-3 px-4">Custom Part</th>
+                    <th class="py-3 px-4">Qty</th>
+                    <th class="py-3 px-4 text-center">Status</th>
+                    <th class="py-3 px-4">Catatan</th>
+                  </tr>
+                </thead>
+                <tbody id="tbl-riwayat-req-body" class="divide-y divide-gray-100 text-gray-600">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
         <!-- VIEW: STOCK OPNAME -->
         <div id="view-opname" class="view-section hidden">
@@ -623,12 +793,12 @@
             <div class="mb-6 bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl p-6 text-white shadow-lg">
               <h2 class="text-xl font-bold mb-2">Scan Stock Opname</h2>
               <p class="text-orange-100 text-sm mb-4">Arahkan kursor ke kotak di bawah ini lalu scan barcode Serial Number. Baris barang akan otomatis ditandai hijau jika ditemukan.</p>
-              <div class="relative max-w-xl">
+              <form class="relative max-w-xl" onsubmit="event.preventDefault(); scanOpnameSN({key: 'Enter'});">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <i class="fa-solid fa-barcode text-gray-400"></i>
                 </div>
                 <input type="text" id="scan-opname-input" onkeyup="scanOpnameSN(event)" class="block w-full pl-12 pr-4 py-4 rounded-xl border-0 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-orange-500 sm:text-lg sm:leading-6 font-mono shadow-sm bg-white" placeholder="Scan Serial Number di sini..." autocomplete="off">
-              </div>
+              </form>
             </div>
 
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
@@ -658,6 +828,61 @@
                 <tbody id="tbl-opname-body" class="divide-y divide-gray-100 text-gray-600">
                   <tr>
                     <td colspan="6" class="py-6 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat data opname...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: RETUR -->
+        <div id="view-retur" class="view-section hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <!-- Header Controls -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              
+              <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                 <select id="filter-retur" class="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                   <option value="">Semua Filter</option>
+                 </select>
+
+                 <button onclick="printRetur()" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                   <i class="fa-solid fa-print"></i> Print Data Retur
+                 </button>
+                 <button onclick="openReturModal()" class="bg-orange-500 hover:bg-orange-600 text-white border border-orange-500 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                   <i class="fa-solid fa-plus"></i> Add Retur Part
+                 </button>
+              </div>
+
+              <div class="flex gap-2 w-full md:w-[300px]">
+                <input type="text" id="search-retur" onkeyup="filterRetur()" class="border border-gray-300 rounded-lg px-4 py-2 text-sm flex-1 outline-none focus:border-primary bg-gray-50/50" placeholder="Cari data retur...">
+                <button onclick="loadReturData()" class="border border-gray-300 rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-50 shadow-sm"><i class="fa-solid fa-arrows-rotate"></i></button>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm mb-4 whitespace-nowrap">
+                <thead class="bg-gray-50 border-y border-gray-200 text-gray-600 font-semibold text-xs uppercase">
+                  <tr>
+                    <th class="py-3 px-4">Nama & Kode Barang</th>
+                    <th class="py-3 px-4">Serial Number</th>
+                    <th class="py-3 px-4">Vendor</th>
+                    <th class="py-3 px-4">BL</th>
+                    <th class="py-3 px-4">Tanggal BL</th>
+                    <th class="py-3 px-4">Harga Lama</th>
+                    <th class="py-3 px-4">Keterangan</th>
+                    <th class="py-3 px-4">Keterangan Tambahan</th>
+                  </tr>
+                </thead>
+                <tbody id="tbl-retur-body" class="divide-y divide-gray-100 text-gray-600 bg-white">
+                  <tr>
+                    <td colspan="8" class="py-8 text-center text-gray-400">
+                      <div class="flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-box-open text-4xl mb-3 text-gray-300"></i>
+                        <p>Data tabel akan diisi nanti.</p>
+                      </div>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -934,6 +1159,66 @@
         </div>
       </div>
     </div>
+
+    <!-- RETUR PART MODAL -->
+    <div id="retur-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+      <div class="absolute inset-0 bg-gray-900 bg-opacity-50 transition-opacity opacity-0" id="retur-backdrop" onclick="closeReturModal()"></div>
+      
+      <div class="bg-white rounded-2xl shadow-xl w-[95%] max-w-[500px] flex flex-col z-10 transform scale-95 opacity-0 transition-all duration-300" id="retur-modal-content">
+        <!-- Header -->
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-box-open"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-gray-800 text-lg">Add Retur Part</h3>
+              <p class="text-xs text-gray-500">Scan atau masukkan Serial Number barang</p>
+            </div>
+          </div>
+          <button onclick="closeReturModal()" class="text-gray-400 hover:text-red-500 transition-colors text-xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        
+        <!-- Body -->
+        <div class="p-6 flex-1 overflow-auto bg-gray-50/50">
+          <form onsubmit="event.preventDefault(); submitReturPart();">
+            <div class="mb-4 relative">
+              <label class="block text-gray-700 text-xs font-bold mb-2 uppercase">Serial Number</label>
+              <input type="text" id="retur-input-sn" onkeyup="debounceCheckReturSN()" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-orange-500 bg-white font-mono shadow-sm" placeholder="Scan SN di sini..." autocomplete="off">
+              <div id="retur-sn-spinner" class="absolute right-4 top-10 hidden">
+                 <i class="fa-solid fa-spinner fa-spin text-orange-500"></i>
+              </div>
+            </div>
+            
+            <div id="retur-preview-container" class="hidden mb-4 p-4 border border-emerald-200 bg-emerald-50 rounded-xl">
+               <p class="text-xs text-emerald-600 font-bold mb-1 uppercase">Barang Ditemukan:</p>
+               <p class="text-sm font-bold text-gray-800" id="retur-preview-kode">-</p>
+               <p class="text-sm text-gray-600 mb-2" id="retur-preview-nama">-</p>
+               <div class="grid grid-cols-2 gap-2 text-xs border-t border-emerald-100 pt-2 mt-2">
+                 <div><span class="text-gray-500">BL:</span> <span id="retur-preview-bl" class="font-mono text-gray-700">-</span></div>
+                 <div><span class="text-gray-500">Tgl:</span> <span id="retur-preview-tgl" class="text-gray-700">-</span></div>
+                 <div><span class="text-gray-500">Vendor:</span> <span id="retur-preview-vendor" class="text-gray-700 font-medium">-</span></div>
+                 <div><span class="text-gray-500">Harga:</span> <span id="retur-preview-harga" class="text-gray-700 font-bold">-</span></div>
+               </div>
+            </div>
+            
+            <div id="retur-warning-container" class="hidden mb-4 p-4 border border-red-200 bg-red-50 rounded-xl flex gap-3 items-start">
+               <i class="fa-solid fa-triangle-exclamation text-red-500 mt-0.5"></i>
+               <p class="text-xs text-red-600 leading-relaxed">SN ini belum ada didata Stock / Pricelist, harap import Stock Nomor Seri / Produksi per Barang terlebih dahulu dihalaman Stock / Pricelist!</p>
+            </div>
+            
+            <div class="flex gap-3 pt-4 border-t border-gray-100">
+              <button type="button" onclick="closeReturModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm transition-colors">Batal</button>
+              <button type="submit" id="retur-btn-submit" disabled class="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-colors flex justify-center items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-plus"></i> Tambahkan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- SCRIPT JAVASCRIPT -->
@@ -1014,17 +1299,49 @@
       }).prosesLoginServer(user, pass);
     }
 
+    function applyUserRoleUI() {
+      if (!currentUser) return;
+      
+      document.getElementById('sidebar-role').innerText = currentUser.role.replace('_', ' ').toUpperCase();
+      document.getElementById('topbar-username').innerText = currentUser.nama;
+      document.getElementById('topbar-cabang').innerText = currentUser.cabang ? currentUser.cabang.toUpperCase() : '';
+      document.getElementById('welcome-name').innerText = currentUser.nama;
+      
+      // --- LOGIKA ROLE CABANG ---
+      const isCabang = currentUser.role.toLowerCase() === 'cabang';
+      
+      // Sembunyikan menu yang tidak relevan
+      const menusToHideForCabang = ['nav-buat-sn', 'nav-sn-masuk', 'nav-riwayat', 'nav-opname', 'nav-request', 'nav-retur'];
+      menusToHideForCabang.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.style.display = isCabang ? 'none' : 'flex';
+      });
+      
+      // Tampilkan menu khusus Cabang
+      const menusToShowForCabang = ['nav-request-part', 'nav-riwayat-request'];
+      menusToShowForCabang.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.style.display = isCabang ? 'flex' : 'none';
+      });
+      
+      // Sembunyikan tombol Import Stock di Cabang
+      const importStockContainer = document.getElementById('stock-import-container');
+      if (importStockContainer) {
+        importStockContainer.style.display = isCabang ? 'none' : 'flex';
+      }
+
+      // Tampilkan kolom aksi stok jika Cabang
+      const thStockAction = document.getElementById('th-stock-action');
+      if (thStockAction) {
+        thStockAction.style.display = isCabang ? 'table-cell' : 'none';
+      }
+    }
+
     function transisiKeAplikasi() {
       const loginWrapper = document.getElementById('login-wrapper');
       const appWrapper = document.getElementById('app-wrapper');
 
-      // Update UI dengan data User
-      if (currentUser) {
-        document.getElementById('sidebar-role').innerText = currentUser.role.replace('_', ' ').toUpperCase();
-        document.getElementById('topbar-username').innerText = currentUser.nama;
-        document.getElementById('topbar-cabang').innerText = currentUser.cabang ? currentUser.cabang.toUpperCase() : '';
-        document.getElementById('welcome-name').innerText = currentUser.nama;
-      }
+      applyUserRoleUI();
 
       loginWrapper.classList.remove('fade-in');
       loginWrapper.classList.add('fade-out');
@@ -1034,7 +1351,6 @@
         appWrapper.classList.remove('hidden', 'fade-out'); // Hapus fade-out agar tidak bentrok
         appWrapper.classList.add('fade-in');
         
-        // Memastikan mulai dari dashboard
         switchView('dashboard');
       }, 500);
     }
@@ -1101,13 +1417,18 @@
     
     // FUNGSI NAVIGASI VIEW
     function switchView(viewId) {
+      let targetViewId = viewId;
+      if (viewId === 'dashboard' && currentUser && currentUser.role.toLowerCase() === 'cabang') {
+        targetViewId = 'dashboard-cabang';
+      }
+
       // 1. Sembunyikan semua view
       document.querySelectorAll('.view-section').forEach(el => {
         el.classList.add('hidden');
       });
       
       // 2. Tampilkan view yang dipilih
-      const targetView = document.getElementById('view-' + viewId);
+      const targetView = document.getElementById('view-' + targetViewId);
       if(targetView) {
         targetView.classList.remove('hidden');
         targetView.classList.add('fade-in');
@@ -1129,6 +1450,8 @@
       // 5. Muat data spesifik per view
       if (viewId === 'dashboard') {
         loadDashboardStats();
+      } else if (viewId === 'dashboard-cabang') {
+        loadDashboardCabangStats();
       } else if (viewId === 'buat-sn') {
         // Set tanggal hari ini sebagai default
         document.getElementById('sn-input-tanggal').valueAsDate = new Date();
@@ -1140,6 +1463,12 @@
         loadStockData();
       } else if (viewId === 'opname') {
         loadOpnameData();
+      } else if (viewId === 'request-part') {
+        loadMasterBarangForRequest();
+      } else if (viewId === 'riwayat-request') {
+        loadRiwayatRequest();
+      } else if (viewId === 'retur') {
+        loadReturData();
       }
       
       // Tutup sidebar di perangkat mobile setelah memilih menu
@@ -1970,8 +2299,11 @@
     
     function renderStockTable(dataArray) {
       const tbody = document.getElementById('tbl-stock-body');
+      const isCabang = currentUser && currentUser.role.toLowerCase() === 'cabang';
+      const colSpan = isCabang ? 7 : 6;
+      
       if (dataArray.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-gray-500 italic">Tidak ada data ditemukan</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="' + colSpan + '" class="py-6 text-center text-gray-500 italic">Tidak ada data ditemukan</td></tr>';
         return;
       }
       
@@ -2002,6 +2334,16 @@
           snButton = `<span class="text-gray-400 text-xs italic">-</span>`;
         }
         
+        let actionBtn = '';
+        if (isCabang) {
+          const escapedNama = item.nama.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          actionBtn = `<td class="py-3 px-4 text-center">
+            <button onclick="addToCartFromStock('${item.kode}', '${escapedNama}')" title="Request Barang" class="text-emerald-500 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 p-2 rounded transition-colors shadow-sm">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </td>`;
+        }
+        
         html += `
           <tr class="hover:bg-gray-50 transition-colors">
             <td class="py-3 px-4 font-mono text-xs text-gray-500 break-all">${item.kode}</td>
@@ -2012,12 +2354,40 @@
             <td class="py-3 px-4 text-center">
               <span class="inline-block min-w-[30px] rounded px-2 py-1 text-xs ${stockClass}">${item.stok}</span>
             </td>
+            ${actionBtn}
           </tr>
         `;
       });
       tbody.innerHTML = html;
     }
     
+    function addToCartFromStock(kode, nama) {
+      // Periksa apakah barang sudah ada di keranjang
+      const existsIdx = requestCartData.findIndex(item => item.kode_barang === kode);
+      if (existsIdx > -1) {
+        requestCartData[existsIdx].jumlah_barang += 1;
+      } else {
+        requestCartData.push({
+          kode_barang: kode,
+          nama_barang: nama,
+          custom_request: '',
+          jumlah_barang: 1,
+          catatan: ''
+        });
+      }
+      renderCart();
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Keranjang Request',
+        text: nama + ' berhasil ditambahkan.',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
+    }
+
     function lihatDetailSNStock(kodeBarang) {
       const item = globalStockData.find(i => i.kode === kodeBarang);
       if (!item || !item.serial_number) return;
@@ -2090,10 +2460,7 @@
           document.getElementById('app-wrapper').classList.add('fade-in');
           
           // Update UI dengan data User
-          document.getElementById('sidebar-role').innerText = currentUser.role.replace('_', ' ').toUpperCase();
-          document.getElementById('topbar-username').innerText = currentUser.nama;
-          document.getElementById('topbar-cabang').innerText = currentUser.cabang ? currentUser.cabang.toUpperCase() : '';
-          document.getElementById('welcome-name').innerText = currentUser.nama;
+          applyUserRoleUI();
           
           switchView('dashboard');
         } catch (e) {
@@ -2587,6 +2954,235 @@
       reader.readAsArrayBuffer(file);
     }
     
+    function processImportPembelian(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      
+      Swal.fire({
+        title: 'Memproses Laporan Pembelian...',
+        html: 'Harap tunggu, sedang membaca dan mencocokkan data Excel...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+          
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          // Konversi sheet ke JSON (array of arrays). Kita gunakan raw: false agar tanggal terformat jika mungkin,
+          // tapi cellDates: true di atas sudah membantu.
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false});
+          
+          const payload = [];
+          let headerRowIndex = -1;
+          let colNoSeri = -1;
+          let colNoBL = -1;
+          let colVendor = -1;
+          let colTanggal = -1;
+          let colKodeBarang = -1;
+          let colNamaBarang = -1;
+          
+          // Cari baris header secara dinamis (biasanya baris pertama atau kedua)
+          for (let r = 0; r < Math.min(jsonData.length, 10); r++) {
+            const row = jsonData[r];
+            if (!row) continue;
+            
+            for (let c = 0; c < row.length; c++) {
+              const colName = String(row[c] || "").toLowerCase().trim();
+              if (colName.includes("no seri") || colName.includes("produksi")) colNoSeri = c;
+              if (colName === "nomor #") colNoBL = c;
+              if (colName.includes("nama pemasok") || colName.includes("vendor")) colVendor = c;
+              if (colName === "tanggal") colTanggal = c;
+              if (colName === "kode #" || colName.includes("kode barang")) colKodeBarang = c;
+              if (colName === "nama barang") colNamaBarang = c;
+            }
+            
+            if (colNoSeri !== -1 && colNoBL !== -1 && colVendor !== -1 && colTanggal !== -1) {
+              headerRowIndex = r;
+              break;
+            }
+          }
+          
+          if (headerRowIndex === -1) {
+            throw new Error("Format Excel tidak valid. Gagal menemukan kolom 'No Seri/Produksi', 'Nomor #', 'Nama Pemasok', atau 'Tanggal'.");
+          }
+          
+          // Proses baris data
+          for (let r = headerRowIndex + 1; r < jsonData.length; r++) {
+            const row = jsonData[r];
+            if (!row || row.length === 0) continue;
+            
+            const snRaw = String(row[colNoSeri] || "").trim();
+            const noBL = String(row[colNoBL] || "").trim();
+            const vendor = String(row[colVendor] || "").trim();
+            const kodeBarang = colKodeBarang !== -1 ? String(row[colKodeBarang] || "").trim() : "";
+            const namaBarang = colNamaBarang !== -1 ? String(row[colNamaBarang] || "").trim() : "";
+            let tgl = row[colTanggal];
+            
+            // Format tanggal jika valid
+            let tglStr = "";
+            if (tgl) {
+              if (tgl instanceof Date) {
+                const yyyy = tgl.getFullYear();
+                const mm = String(tgl.getMonth() + 1).padStart(2, '0');
+                const dd = String(tgl.getDate()).padStart(2, '0');
+                tglStr = `${yyyy}-${mm}-${dd}`;
+              } else {
+                tglStr = String(tgl).split('T')[0];
+              }
+            }
+            
+            if (snRaw) {
+              const snList = snRaw.split(/[\n,]+/).map(s => s.trim()).filter(s => s !== "");
+              snList.forEach(sn => {
+                payload.push({
+                  serial_number: sn,
+                  kode_barang: kodeBarang,
+                  nama_barang: namaBarang,
+                  nomor_bl: noBL,
+                  nama_pemasok: vendor,
+                  tanggal_bl: tglStr
+                });
+              });
+            }
+          }
+          
+          if (payload.length === 0) {
+            throw new Error("Tidak ada data Serial Number yang ditemukan di file Excel.");
+          }
+          
+          // Kirim payload ke server untuk pencocokan dan update
+          google.script.run.withSuccessHandler(function(res) {
+            if (res.success) {
+              Swal.fire('Berhasil!', res.message, 'success');
+              document.getElementById('import-pembelian-file').value = ""; // reset
+              if (typeof loadStockData === "function") loadStockData(); // refresh data tabel
+            } else {
+              Swal.fire('Gagal Import Pembelian', res.message, 'error');
+              document.getElementById('import-pembelian-file').value = "";
+            }
+          }).withFailureHandler(function(err) {
+            Swal.fire('Error!', 'Gagal menghubungi server.', 'error');
+            document.getElementById('import-pembelian-file').value = "";
+          }).updatePembelianDariExcelServer(payload);
+          
+        } catch (err) {
+          Swal.fire('Error Import', err.message, 'error');
+          console.error(err);
+          document.getElementById('import-pembelian-file').value = "";
+        }
+      };
+      
+      reader.readAsArrayBuffer(file);
+    }
+    
+    function processUpdateHarga(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      
+      Swal.fire({
+        title: 'Memproses Update Harga...',
+        html: 'Harap tunggu, sedang membaca data Excel...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+          
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false});
+          
+          const payload = [];
+          let headerRowIndex = -1;
+          let colNoBL = -1;
+          let colKodeBarang = -1;
+          let colHarga = -1;
+          
+          for (let r = 0; r < Math.min(jsonData.length, 10); r++) {
+            const row = jsonData[r];
+            if (!row) continue;
+            
+            for (let c = 0; c < row.length; c++) {
+              const colName = String(row[c] || "").toLowerCase().trim();
+              if (colName === "nomor #") colNoBL = c;
+              if (colName === "kode #" || colName.includes("kode barang")) colKodeBarang = c;
+              if (colName === "@harga") colHarga = c;
+            }
+            
+            if (colNoBL !== -1 && colKodeBarang !== -1 && colHarga !== -1) {
+              headerRowIndex = r;
+              break;
+            }
+          }
+          
+          if (headerRowIndex === -1) {
+            throw new Error("Format Excel tidak valid. Gagal menemukan kolom 'Nomor #', 'Kode #', atau '@Harga'.");
+          }
+          
+          for (let r = headerRowIndex + 1; r < jsonData.length; r++) {
+            const row = jsonData[r];
+            if (!row || row.length === 0) continue;
+            
+            const noBL = String(row[colNoBL] || "").trim();
+            const kodeBarang = String(row[colKodeBarang] || "").trim();
+            let hargaStr = String(row[colHarga] || "").replace(/[^0-9.-]+/g, ""); // extract numbers
+            const harga = hargaStr ? parseFloat(hargaStr) : 0;
+            
+            if (noBL && kodeBarang && harga > 0) {
+              payload.push({
+                nomor_bl: noBL,
+                kode_barang: kodeBarang,
+                harga_lama: harga
+              });
+            }
+          }
+          
+          if (payload.length === 0) {
+            throw new Error("Tidak ada data Harga valid yang ditemukan di file Excel.");
+          }
+          
+          google.script.run.withSuccessHandler(function(res) {
+            if (res.success) {
+              Swal.fire('Berhasil!', res.message, 'success');
+              document.getElementById('update-harga-file').value = ""; // reset
+              if (typeof loadStockData === "function") loadStockData(); // refresh data tabel
+            } else {
+              Swal.fire('Gagal Update Harga', res.message, 'error');
+              document.getElementById('update-harga-file').value = "";
+            }
+          }).withFailureHandler(function(err) {
+            Swal.fire('Error!', 'Gagal menghubungi server.', 'error');
+            document.getElementById('update-harga-file').value = "";
+          }).updateHargaDariExcelServer(payload);
+          
+        } catch (err) {
+          Swal.fire('Error Import', err.message, 'error');
+          console.error(err);
+          document.getElementById('update-harga-file').value = "";
+        }
+      };
+      
+      reader.readAsArrayBuffer(file);
+    }
+
+    
     // ==========================================
 // LOGIKA CETAK BARCODE (PRINT MODAL)
     // ==========================================
@@ -2878,6 +3474,563 @@
       }, 500);
     }
   
+    // ==========================================
+    // LOGIKA CABANG / REQUEST PART
+    // ==========================================
+    let masterBarangCabang = [];
+    let riwayatRequestData = [];
+
+    function loadDashboardCabangStats() {
+      const elTotal = document.getElementById('dash-cabang-total');
+      const elProses = document.getElementById('dash-cabang-proses');
+      const elSelesai = document.getElementById('dash-cabang-selesai');
+      
+      elTotal.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-lg text-gray-300"></i>';
+      elProses.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-lg text-gray-300"></i>';
+      elSelesai.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-lg text-gray-300"></i>';
+      
+      const cabang = currentUser.cabang || '';
+      
+      google.script.run.withSuccessHandler(function(res) {
+        if (res.success) {
+          elTotal.innerText = res.data.totalBulanIni;
+          elProses.innerText = res.data.dalamProses;
+          elSelesai.innerText = res.data.selesai;
+        } else {
+          elTotal.innerText = "Err";
+          elProses.innerText = "Err";
+          elSelesai.innerText = "Err";
+        }
+      }).getDashboardCabangStatsServer(cabang);
+    }
+
+    let requestCartData = [];
+
+    function loadMasterBarangForRequest() {
+      const datalistEl = document.getElementById('req-datalist-barang');
+      const inputEl = document.getElementById('req-kode-barang');
+      inputEl.placeholder = 'Memuat barang...';
+      inputEl.disabled = true;
+      
+      google.script.run.withSuccessHandler(function(res) {
+        if(res.success) {
+          masterBarangCabang = res.data;
+          let options = '';
+          masterBarangCabang.forEach(item => {
+            options += '<option value="' + item.kode + ' - ' + item.nama + '"></option>';
+          });
+          datalistEl.innerHTML = options;
+          inputEl.placeholder = 'Ketik nama atau kode barang...';
+          inputEl.disabled = false;
+        } else {
+          inputEl.placeholder = 'Gagal memuat barang';
+        }
+      }).getMasterBarangServer();
+    }
+
+    function reqPartSelectChange() {
+      const inputEl = document.getElementById('req-kode-barang');
+      const customNamaEl = document.getElementById('req-custom-nama');
+      
+      if (inputEl.value.trim() !== "") {
+        customNamaEl.value = "";
+        customNamaEl.disabled = true;
+        customNamaEl.classList.add('bg-gray-100');
+      } else {
+        customNamaEl.disabled = false;
+        customNamaEl.classList.remove('bg-gray-100');
+      }
+    }
+
+    function addToCart() {
+      const rawInput = document.getElementById('req-kode-barang').value.trim();
+      const customNama = document.getElementById('req-custom-nama').value.trim();
+      const qty = parseInt(document.getElementById('req-qty').value) || 1;
+      const catatan = document.getElementById('req-catatan').value.trim();
+      
+      if (!rawInput && !customNama) {
+        Swal.fire('Error', 'Silakan pilih/ketik barang dari master ATAU tulis nama barang custom.', 'error');
+        return;
+      }
+
+      let kode = '-';
+      let namaBarang = customNama;
+      let isCustom = true;
+
+      if (rawInput) {
+        // Coba ekstrak kode dan nama dari format "KODE - NAMA"
+        const separatorIdx = rawInput.indexOf(' - ');
+        if (separatorIdx !== -1) {
+          kode = rawInput.substring(0, separatorIdx);
+          namaBarang = rawInput.substring(separatorIdx + 3);
+          isCustom = false;
+        } else {
+          // Cari apakah cocok dengan master exact
+          const found = masterBarangCabang.find(b => b.kode === rawInput || b.nama === rawInput);
+          if (found) {
+             kode = found.kode;
+             namaBarang = found.nama;
+             isCustom = false;
+          } else {
+             kode = '-';
+             namaBarang = rawInput;
+             isCustom = true;
+          }
+        }
+      }
+
+      requestCartData.push({
+        kode_barang: kode,
+        nama_barang: namaBarang,
+        custom_request: isCustom ? namaBarang : '',
+        jumlah_barang: qty,
+        catatan: catatan
+      });
+
+      // Reset Form
+      document.getElementById('form-request-part').reset();
+      reqPartSelectChange();
+      renderCart();
+    }
+
+    function renderCart() {
+      const tbody = document.getElementById('tbl-cart-body');
+      const btnSubmit = document.getElementById('btn-submit-req');
+      const cartCount = document.getElementById('cart-count');
+      
+      cartCount.innerText = requestCartData.length + ' Item';
+      
+      if (requestCartData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-gray-400">Keranjang kosong.</td></tr>';
+        btnSubmit.disabled = true;
+        return;
+      }
+      
+      btnSubmit.disabled = false;
+      let html = '';
+      requestCartData.forEach((item, idx) => {
+        const rowClass = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+        html += '<tr class="' + rowClass + '">' +
+          '<td class="py-2 px-4 font-mono text-xs">' + item.kode_barang + '</td>' +
+          '<td class="py-2 px-4 text-xs font-medium">' + item.nama_barang + '</td>' +
+          '<td class="py-2 px-4 text-center font-bold">' + item.jumlah_barang + '</td>' +
+          '<td class="py-2 px-4 text-xs max-w-[150px] truncate" title="' + item.catatan + '">' + (item.catatan || '-') + '</td>' +
+          '<td class="py-2 px-4 text-center">' +
+            '<button type="button" onclick="removeFromCart(' + idx + ')" class="text-red-400 hover:text-red-600 transition-colors w-6 h-6 rounded flex items-center justify-center hover:bg-red-50"><i class="fa-solid fa-trash"></i></button>' +
+          '</td>' +
+        '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function removeFromCart(index) {
+      requestCartData.splice(index, 1);
+      renderCart();
+    }
+
+    function submitRequestPart() {
+      if (requestCartData.length === 0) return;
+      
+      const btn = document.getElementById('btn-submit-req');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+      
+      google.script.run.withSuccessHandler(function(idRes) {
+        const id_request = idRes.newId;
+        const tanggal = new Date();
+        
+        // Siapkan array payload dari cart
+        const payload = requestCartData.map(item => ({
+          id_request: id_request,
+          tanggal: tanggal,
+          cabang: currentUser.cabang || 'UNKNOWN',
+          kode_barang: item.kode_barang,
+          nama_barang: item.nama_barang,
+          custom_request: item.kode_barang === '-' ? item.nama_barang : '',
+          jumlah_barang: item.jumlah_barang,
+          status_request: 'Menunggu',
+          catatan: item.catatan
+        }));
+        
+        google.script.run.withSuccessHandler(function(saveRes) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Semua Request';
+          
+          if(saveRes.success) {
+            Swal.fire('Berhasil!', 'Semua request berhasil dikirim dengan ID ' + id_request, 'success');
+            requestCartData = [];
+            renderCart();
+          } else {
+            Swal.fire('Gagal', saveRes.message, 'error');
+          }
+        }).saveRequestCabangServer(payload);
+        
+      }).generateRequestIdServer(currentUser.cabang);
+    }
+
+    function loadRiwayatRequest() {
+      const tbody = document.getElementById('tbl-riwayat-req-body');
+      tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat riwayat request...</td></tr>';
+      
+      const cabang = (currentUser.role.toLowerCase() === 'cabang') ? (currentUser.cabang || '') : '';
+      
+      google.script.run.withSuccessHandler(function(res) {
+        if(res.success) {
+          riwayatRequestData = res.data;
+          renderRiwayatReqTable(riwayatRequestData);
+        } else {
+          tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-red-500">' + res.message + '</td></tr>';
+        }
+      }).getRequestCabangServer(cabang);
+    }
+
+    function renderRiwayatReqTable(data) {
+      const tbody = document.getElementById('tbl-riwayat-req-body');
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-gray-400 font-medium">Belum ada data request.</td></tr>';
+        return;
+      }
+      
+      let html = '';
+      data.forEach(item => {
+        let statusBadge = '';
+        const st = item.status_request ? item.status_request.toLowerCase() : '';
+        if (st === 'selesai') {
+          statusBadge = '<span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold">Selesai</span>';
+        } else if (st === 'dalam proses') {
+          statusBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">Dalam Proses</span>';
+        } else if (st === 'ditolak') {
+          statusBadge = '<span class="bg-red-100 text-red-700 px-2 py-1 rounded-md text-xs font-bold">Ditolak</span>';
+        } else {
+          statusBadge = '<span class="bg-amber-100 text-amber-700 px-2 py-1 rounded-md text-xs font-bold">Menunggu</span>';
+        }
+        
+        const namaTampil = item.kode_barang !== '-' ? item.kode_barang + ' - ' + item.nama_barang : item.nama_barang;
+        
+        html += '<tr class="hover:bg-gray-50 transition-colors">' +
+            '<td class="py-3 px-4">' + item.tanggal + '</td>' +
+            '<td class="py-3 px-4 font-mono text-sm">' + item.id_request + '</td>' +
+            '<td class="py-3 px-4 font-bold text-gray-700">' + item.cabang + '</td>' +
+            '<td class="py-3 px-4">' + (item.kode_barang !== '-' ? namaTampil : '-') + '</td>' +
+            '<td class="py-3 px-4">' + (item.custom_request || '-') + '</td>' +
+            '<td class="py-3 px-4 font-bold">' + item.jumlah_barang + '</td>' +
+            '<td class="py-3 px-4 text-center">' + statusBadge + '</td>' +
+            '<td class="py-3 px-4 text-gray-500 text-sm max-w-[200px] truncate" title="' + (item.catatan || '') + '">' + (item.catatan || '-') + '</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+    
+    function filterRiwayatReq() {
+      const keyword = document.getElementById('search-riwayat-req').value.toLowerCase();
+      const filtered = riwayatRequestData.filter(item => {
+        return (item.id_request && item.id_request.toLowerCase().includes(keyword)) ||
+               (item.nama_barang && item.nama_barang.toLowerCase().includes(keyword)) ||
+               (item.custom_request && item.custom_request.toLowerCase().includes(keyword)) ||
+               (item.cabang && item.cabang.toLowerCase().includes(keyword));
+      });
+      renderRiwayatReqTable(filtered);
+    }
+
+    // ==========================================
+    // LOGIKA RETUR
+    // ==========================================
+    let returData = [];
+    
+    function loadReturData() {
+      const tbody = document.getElementById('tbl-retur-body');
+      tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat data retur...</td></tr>';
+      
+      google.script.run.withSuccessHandler(function(res) {
+        if(res.success) {
+          returData = res.data;
+          renderReturTable(returData);
+        } else {
+          tbody.innerHTML = '<tr><td colspan="9" class="py-6 text-center text-red-500">' + res.message + '</td></tr>';
+        }
+      }).getReturDataServer();
+    }
+
+    function renderReturTable(data) {
+      const tbody = document.getElementById('tbl-retur-body');
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-gray-400 font-medium">Belum ada data retur.</td></tr>';
+        return;
+      }
+      
+      let html = '';
+      data.forEach(item => {
+        html += '<tr class="hover:bg-gray-50 transition-colors">' +
+            '<td class="py-3 px-4">' +
+              '<div class="font-medium">' + item.nama_barang + '</div>' +
+              '<div class="text-[10px] text-gray-500 font-mono mt-1">' + item.kode_barang + '</div>' +
+            '</td>' +
+            '<td class="py-3 px-4 font-mono">' + item.serial_number + '</td>' +
+            '<td class="py-3 px-4">' + item.vendor + '</td>' +
+            '<td class="py-3 px-4">' + item.bl + '</td>' +
+            '<td class="py-3 px-4">' + item.tanggal_bl + '</td>' +
+            '<td class="py-3 px-4 whitespace-nowrap">' + (item.harga_lama ? 'Rp ' + Number(item.harga_lama).toLocaleString('id-ID') : '-') + '</td>' +
+            '<td class="py-2 px-2 w-48"><input type="text" class="border border-gray-300 rounded px-2 py-1.5 text-xs w-full outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all bg-white" placeholder="Keterangan..." value="' + (item.keterangan || '').replace(/"/g, '&quot;') + '" onchange="updateReturKeterangan(\'' + item.serial_number + '\', \'keterangan\', this.value)"></td>' +
+            '<td class="py-2 px-2 w-48"><input type="text" class="border border-gray-300 rounded px-2 py-1.5 text-xs w-full outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all bg-white" placeholder="Ket. Tambahan..." value="' + (item.keterangan_tambahan || '').replace(/"/g, '&quot;') + '" onchange="updateReturKeterangan(\'' + item.serial_number + '\', \'keterangan_tambahan\', this.value)"></td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+    
+    function filterRetur() {
+      const keyword = document.getElementById('search-retur').value.toLowerCase();
+      const filtered = returData.filter(item => {
+        return (item.kode_barang && item.kode_barang.toLowerCase().includes(keyword)) ||
+               (item.nama_barang && item.nama_barang.toLowerCase().includes(keyword)) ||
+               (item.serial_number && item.serial_number.toLowerCase().includes(keyword)) ||
+               (item.vendor && item.vendor.toLowerCase().includes(keyword)) ||
+               (item.bl && item.bl.toLowerCase().includes(keyword));
+      });
+      renderReturTable(filtered);
+    }
+    
+    function updateReturKeterangan(sn, field, value) {
+      google.script.run.withSuccessHandler(function(res) {
+        if(res.success) {
+          const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+          });
+          Toast.fire({
+            icon: 'success',
+            title: 'Keterangan tersimpan'
+          });
+          
+          // Update local data
+          const part = returData.find(p => p.serial_number === sn);
+          if (part) part[field] = value;
+          
+        } else {
+          Swal.fire('Gagal Menyimpan', res.message, 'error');
+        }
+      }).withFailureHandler(function(err) {
+        Swal.fire('Error', 'Gagal menghubungi server.', 'error');
+      }).updateReturKeteranganServer(sn, field, value);
+    }
+    
+    function printRetur() {
+      if (!returData || returData.length === 0) {
+        Swal.fire('Info', 'Tidak ada data retur untuk diprint.', 'info');
+        return;
+      }
+
+      const now = new Date();
+      const date = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const formattedDate = `${date}/${month}/${year}`;
+
+      let printContent = `
+        <html>
+          <head>
+            <title>Laporan Retur Part</title>
+            <style>
+              @page { size: A4 landscape; margin: 20mm; }
+              body { font-family: 'Inter', sans-serif, Arial; font-size: 11px; color: #333; }
+              .header { text-align: center; margin-bottom: 20px; }
+              .header h2 { margin: 0; font-size: 18px; font-weight: bold; }
+              .header p { margin: 5px 0 0; font-size: 12px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+              th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+              th { background-color: #f9fafb; font-weight: bold; font-size: 11px; }
+              .text-center { text-align: center; }
+              .font-mono { font-family: monospace; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>LAPORAN RETUR PART</h2>
+              <p>Tanggal Cetak: ${formattedDate}</p>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th class="text-center" style="width: 5%">No</th>
+                  <th style="width: 25%">Nama Barang</th>
+                  <th style="width: 15%">Serial Number</th>
+                  <th style="width: 15%">Vendor</th>
+                  <th style="width: 10%">Nomor BL</th>
+                  <th style="width: 20%">Keterangan</th>
+                  <th style="width: 10%">Harga Lama</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      returData.forEach((item, index) => {
+        const hargaLama = item.harga_lama ? 'Rp ' + Number(item.harga_lama).toLocaleString('id-ID') : '-';
+        // Combine keterangan and keterangan_tambahan
+        let ket = item.keterangan || '';
+        if (item.keterangan_tambahan) {
+          ket += ket ? ' | ' + item.keterangan_tambahan : item.keterangan_tambahan;
+        }
+        if (!ket) ket = '-';
+
+        printContent += `
+          <tr>
+            <td class="text-center">${index + 1}</td>
+            <td>${item.nama_barang || '-'}</td>
+            <td class="font-mono">${item.serial_number || '-'}</td>
+            <td>${item.vendor || '-'}</td>
+            <td>${item.bl || '-'}</td>
+            <td>${ket}</td>
+            <td>${hargaLama}</td>
+          </tr>
+        `;
+      });
+
+      printContent += `
+              </tbody>
+            </table>
+            <div style="margin-top: 30px; text-align: right; font-size: 11px;">
+              <p>Dicetak oleh: <strong>${currentUser.username || 'Admin'}</strong></p>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const printWindow = window.open('', '_blank', 'width=1000,height=800');
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    }
+    
+    // MODAL ADD RETUR PART
+    let returSearchTimeout = null;
+    let currentReturPart = null;
+
+    function openReturModal() {
+      const modal = document.getElementById('retur-modal');
+      const backdrop = document.getElementById('retur-backdrop');
+      const content = document.getElementById('retur-modal-content');
+      
+      document.getElementById('retur-input-sn').value = '';
+      document.getElementById('retur-preview-container').classList.add('hidden');
+      document.getElementById('retur-warning-container').classList.add('hidden');
+      document.getElementById('retur-btn-submit').disabled = true;
+      document.getElementById('retur-sn-spinner').classList.add('hidden');
+      currentReturPart = null;
+      
+      modal.classList.remove('hidden');
+      
+      setTimeout(() => {
+        backdrop.classList.remove('opacity-0');
+        backdrop.classList.add('opacity-100');
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+        document.getElementById('retur-input-sn').focus();
+      }, 10);
+    }
+    
+    function closeReturModal() {
+      const backdrop = document.getElementById('retur-backdrop');
+      const content = document.getElementById('retur-modal-content');
+      
+      backdrop.classList.remove('opacity-100');
+      backdrop.classList.add('opacity-0');
+      content.classList.remove('scale-100', 'opacity-100');
+      content.classList.add('scale-95', 'opacity-0');
+      
+      setTimeout(() => {
+        document.getElementById('retur-modal').classList.add('hidden');
+      }, 300);
+    }
+
+    function debounceCheckReturSN() {
+      clearTimeout(returSearchTimeout);
+      const sn = document.getElementById('retur-input-sn').value.trim();
+      
+      const previewCont = document.getElementById('retur-preview-container');
+      const warningCont = document.getElementById('retur-warning-container');
+      const spinner = document.getElementById('retur-sn-spinner');
+      const btnSubmit = document.getElementById('retur-btn-submit');
+      
+      previewCont.classList.add('hidden');
+      warningCont.classList.add('hidden');
+      btnSubmit.disabled = true;
+      currentReturPart = null;
+      
+      if (sn === '') {
+        spinner.classList.add('hidden');
+        return;
+      }
+      
+      spinner.classList.remove('hidden');
+      
+      returSearchTimeout = setTimeout(() => {
+        google.script.run.withSuccessHandler(function(res) {
+          spinner.classList.add('hidden');
+          // Pastikan nilai input tidak berubah selama loading
+          if (document.getElementById('retur-input-sn').value.trim() !== sn) return;
+          
+          if (res.success && res.found) {
+             document.getElementById('retur-preview-kode').innerText = res.data.kode_barang;
+             document.getElementById('retur-preview-nama').innerText = res.data.nama_barang;
+             document.getElementById('retur-preview-bl').innerText = res.data.nomor_bl || '-';
+             document.getElementById('retur-preview-tgl').innerText = res.data.tanggal_bl || '-';
+             document.getElementById('retur-preview-vendor').innerText = res.data.nama_pemasok || '-';
+             document.getElementById('retur-preview-harga').innerText = res.data.harga_lama ? 'Rp ' + Number(res.data.harga_lama).toLocaleString('id-ID') : '-';
+             previewCont.classList.remove('hidden');
+             btnSubmit.disabled = false;
+             currentReturPart = res.data;
+          } else {
+             warningCont.classList.remove('hidden');
+          }
+        }).checkSNInMasterServer(sn);
+      }, 500); // 500ms delay debounce
+    }
+
+    function submitReturPart() {
+       if (!currentReturPart) return;
+       
+       const sn = document.getElementById('retur-input-sn').value.trim();
+       const btnSubmit = document.getElementById('retur-btn-submit');
+       
+       btnSubmit.disabled = true;
+       btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+       
+       const payload = {
+         kode_barang: currentReturPart.kode_barang,
+         nama_barang: currentReturPart.nama_barang,
+         serial_number: sn,
+         vendor: currentReturPart.nama_pemasok,
+         bl: currentReturPart.nomor_bl,
+         tanggal_bl: currentReturPart.tanggal_bl,
+         harga_lama: currentReturPart.harga_lama
+       };
+       
+       google.script.run.withSuccessHandler(function(res) {
+         btnSubmit.innerHTML = '<i class="fa-solid fa-plus"></i> Tambahkan';
+         
+         if (res.success) {
+           Swal.fire({
+              title: 'Berhasil',
+              text: res.message || `Part ${payload.kode_barang} (${payload.serial_number}) berhasil ditambahkan ke retur.`,
+              icon: 'success',
+              confirmButtonColor: '#f97316'
+           });
+           closeReturModal();
+           loadReturData(); // Refresh tabel retur
+         } else {
+           btnSubmit.disabled = false;
+           Swal.fire('Gagal', res.message, 'error');
+         }
+       }).addReturPartServer(payload);
+    }
   </script>
 </body>
 </html>
+
+

@@ -662,3 +662,465 @@ function simpanOpnameServer(opnameData) {
     return {success: false, message: "Gagal menyimpan status: " + error.message};
   }
 }
+// ==========================================
+// FUNGSI CABANG / REQUEST PART
+// ==========================================
+
+function getDashboardCabangStatsServer(cabang) {
+  try {
+    var sheet = getSheetByName("request_cabang");
+    var data = sheet.getDataRange().getValues();
+    var stats = {
+      totalBulanIni: 0,
+      dalamProses: 0,
+      selesai: 0
+    };
+    
+    var today = new Date();
+    var currentMonth = today.getMonth();
+    var currentYear = today.getFullYear();
+    
+    // Looping dari baris kedua (lewati header)
+    for (var i = 1; i < data.length; i++) {
+      var rowCabang = data[i][2]; // Kolom C (indeks 2)
+      
+      // Jika filter cabang cocok atau PUSAT melihat semua
+      if (!cabang || cabang === 'admin_pusat' || (rowCabang && rowCabang.toString().trim().toLowerCase() === cabang.trim().toLowerCase())) {
+        var rowDate = data[i][1]; // Kolom B (indeks 1)
+        var status = data[i][7] ? data[i][7].toString().trim().toLowerCase() : ""; // Kolom H (indeks 7)
+        
+        // Cek bulan ini
+        if (rowDate instanceof Date) {
+          if (rowDate.getMonth() === currentMonth && rowDate.getFullYear() === currentYear) {
+            stats.totalBulanIni++;
+          }
+        } else if (rowDate) {
+          // Asumsi selalu dihitung jika valid tapi format bukan object date
+          stats.totalBulanIni++; 
+        }
+        
+        if (status === "dalam proses") {
+          stats.dalamProses++;
+        } else if (status === "selesai") {
+          stats.selesai++;
+        }
+      }
+    }
+    
+    return {success: true, data: stats};
+  } catch (error) {
+    return {success: false, message: "Error stats cabang: " + error.message};
+  }
+}
+
+function generateRequestIdServer(cabangName) {
+  try {
+    var date = new Date();
+    var d = ("0" + date.getDate()).slice(-2);
+    var m = ("0" + (date.getMonth() + 1)).slice(-2);
+    var y = date.getFullYear().toString().substring(2,4);
+    var dateStr = y + m + d;
+    
+    var singkatan = "CAB";
+    if (cabangName) {
+      singkatan = cabangName.replace(/[^A-Za-z]/g, '').toUpperCase();
+      if(singkatan.length > 3) singkatan = singkatan.substring(0, 3);
+    }
+    
+    var prefix = "REQ-" + singkatan + "-" + dateStr + "-";
+    
+    var sheet = getSheetByName("request_cabang");
+    var data = sheet.getDataRange().getValues();
+    var maxUrut = 0;
+    
+    for (var i = 1; i < data.length; i++) {
+      var idStr = data[i][0]; // Kolom A
+      if (idStr && idStr.toString().indexOf(prefix) === 0) {
+        var seqStr = idStr.toString().substring(prefix.length);
+        if (!isNaN(seqStr)) {
+          var seq = parseInt(seqStr, 10);
+          if (seq > maxUrut) {
+            maxUrut = seq;
+          }
+        }
+      }
+    }
+    
+    var nextUrut = ("000" + (maxUrut + 1)).slice(-3);
+    return {success: true, newId: prefix + nextUrut};
+  } catch (error) {
+    return {success: false, message: "Error generate ID: " + error.message, newId: "REQ-ERR-" + Date.now()};
+  }
+}
+
+function saveRequestCabangServer(requestData) {
+  try {
+    var sheet = getSheetByName("request_cabang");
+    
+    for (var i = 0; i < requestData.length; i++) {
+      var item = requestData[i];
+      sheet.appendRow([
+        item.id_request,
+        item.tanggal,
+        item.cabang,
+        item.kode_barang,
+        item.nama_barang,
+        item.custom_request,
+        item.jumlah_barang,
+        item.status_request,
+        item.catatan
+      ]);
+    }
+    
+    return {success: true, message: "Request berhasil dikirim!"};
+  } catch (error) {
+    return {success: false, message: "Gagal menyimpan request: " + error.message};
+  }
+}
+
+function getRequestCabangServer(cabang) {
+  try {
+    var sheet = getSheetByName("request_cabang");
+    var data = sheet.getDataRange().getValues();
+    var results = [];
+    
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      if (!row[0]) continue;
+      
+      var rowCabang = row[2]; // Kolom C
+      
+      if (!cabang || cabang === 'admin_pusat' || (rowCabang && rowCabang.toString().trim().toLowerCase() === cabang.trim().toLowerCase())) {
+        
+        var tgl = row[1];
+        if (tgl instanceof Date) {
+          tgl = Utilities.formatDate(tgl, Session.getScriptTimeZone(), "dd MMM yyyy HH:mm");
+        } else if (tgl) {
+          tgl = tgl.toString();
+        }
+        
+        results.push({
+          id_request: row[0],
+          tanggal: tgl,
+          cabang: row[2],
+          kode_barang: row[3],
+          nama_barang: row[4],
+          custom_request: row[5],
+          jumlah_barang: row[6],
+          status_request: row[7],
+          catatan: row[8]
+        });
+      }
+    }
+    
+    return {success: true, data: results.reverse()};
+  } catch(error) {
+    return {success: false, message: "Error load data request: " + error.message};
+  }
+}
+
+// ==========================================
+// FUNGSI RETUR
+// ==========================================
+
+function getReturDataServer() {
+  try {
+    var sheet = getSheetByName("retur");
+    if (!sheet) {
+        return {success: false, message: "Sheet 'retur' tidak ditemukan."};
+    }
+    var data = sheet.getDataRange().getValues();
+    var listRetur = [];
+    
+    // Looping dari baris kedua (lewati header)
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] !== "") {
+        listRetur.push({
+          kode_barang: data[i][0].toString().trim(),
+          nama_barang: data[i][1].toString().trim(),
+          serial_number: data[i][2].toString().trim(),
+          vendor: data[i][3].toString().trim(),
+          bl: data[i][4].toString().trim(),
+          tanggal_bl: data[i][5] instanceof Date ? Utilities.formatDate(data[i][5], Session.getScriptTimeZone(), "dd-MM-yyyy") : data[i][5].toString().trim(),
+          harga_lama: data[i][6].toString().trim(),
+          keterangan: data[i][7].toString().trim(),
+          keterangan_tambahan: data[i][8] ? data[i][8].toString().trim() : ""
+        });
+      }
+    }
+    return {success: true, data: listRetur};
+    return {success: true, data: listRetur};
+  } catch (error) {
+    return {success: false, message: "Gagal memuat data Retur: " + error.message};
+  }
+}
+
+function addReturPartServer(item) {
+  try {
+    var sheet = getSheetByName("retur");
+    if (!sheet) {
+        return {success: false, message: "Sheet 'retur' tidak ditemukan."};
+    }
+    
+    // Asumsi kolom: A=kode_barang, B=nama_barang, C=serial_number, D=vendor, E=bl, F=tanggal_bl, G=harga_lama, H=keterangan, I=keterangan_tambahan
+    sheet.appendRow([
+      item.kode_barang || "",
+      item.nama_barang || "",
+      item.serial_number || "",
+      item.vendor || "", // vendor
+      item.bl || "", // bl
+      item.tanggal_bl || "", // tanggal_bl
+      item.harga_lama || "", // harga_lama
+      "", // keterangan
+      ""  // keterangan_tambahan
+    ]);
+    
+    return {success: true, message: "Part berhasil ditambahkan ke daftar retur."};
+  } catch (error) {
+    return {success: false, message: "Gagal menyimpan data retur: " + error.message};
+  }
+}
+
+
+function checkSNInMasterServer(sn) {
+  try {
+    if (!sn) return {success: false, found: false};
+    sn = sn.toString().trim().toLowerCase();
+    
+    var foundData = null;
+    
+    // 1. Cek di master_sn terlebih dahulu (prioritas karena ada data update)
+    var sheetSN = getSheetByName("master_sn");
+    if (sheetSN) {
+      var dataSN = sheetSN.getDataRange().getValues();
+      for (var i = 1; i < dataSN.length; i++) {
+        var snString = dataSN[i][0] ? dataSN[i][0].toString().trim().toLowerCase() : "";
+        
+        if (snString === sn) {
+          foundData = {
+            kode_barang: dataSN[i][1],
+            nama_barang: dataSN[i][2],
+            nomor_bl: dataSN[i][3],
+            nama_pemasok: dataSN[i][4],
+            tanggal_bl: dataSN[i][5] instanceof Date ? Utilities.formatDate(dataSN[i][5], Session.getScriptTimeZone(), "yyyy-MM-dd") : dataSN[i][5],
+            harga_lama: dataSN[i][7]
+          };
+          break;
+        }
+      }
+    }
+    
+    // 2. Jika tidak ditemukan di master_sn, cari di master_barang
+    if (!foundData) {
+      var sheetMB = getSheetByName("master_barang");
+      if (sheetMB) {
+        var dataMB = sheetMB.getDataRange().getValues();
+        for (var j = 1; j < dataMB.length; j++) {
+          var snMB = dataMB[j][2] ? dataMB[j][2].toString() : "";
+          if (snMB) {
+            var snArray = snMB.toLowerCase().split(/[\n,]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s !== ""; });
+            if (snArray.indexOf(sn) !== -1) {
+              foundData = {
+                kode_barang: dataMB[j][0],
+                nama_barang: dataMB[j][1],
+                nomor_bl: dataMB[j][6] || "",
+                nama_pemasok: dataMB[j][7] || "",
+                tanggal_bl: dataMB[j][8] instanceof Date ? Utilities.formatDate(dataMB[j][8], Session.getScriptTimeZone(), "yyyy-MM-dd") : (dataMB[j][8] || ""),
+                harga_lama: dataMB[j][4] || "" // Kolom Harga Modal
+              };
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    if (foundData) {
+      return {
+        success: true,
+        found: true,
+        data: foundData
+      };
+    } else {
+      return {success: true, found: false};
+    }
+    
+  } catch (error) {
+    return {success: false, message: error.message};
+  }
+}
+
+function updatePembelianDariExcelServer(payload) {
+  try {
+    if (!payload || payload.length === 0) {
+      return {success: false, message: "Payload kosong."};
+    }
+    
+    var sheet = getSheetByName("master_sn");
+    if (!sheet) return {success: false, message: "Sheet 'master_sn' tidak ditemukan."};
+    
+    var dataRange = sheet.getDataRange();
+    var data = dataRange.getValues();
+    
+    // Create dictionary for fast checking of existing SN in master_sn
+    var existingSnRowMap = {};
+    for (var r = 1; r < data.length; r++) {
+      var snString = data[r][0] ? data[r][0].toString().trim().toLowerCase() : "";
+      if (snString) {
+        existingSnRowMap[snString] = r; // Store row index
+      }
+    }
+    
+    var updateCount = 0;
+    var newRows = [];
+    var modifiedExisting = false;
+    
+    for (var i = 0; i < payload.length; i++) {
+      var item = payload[i];
+      var sn = item.serial_number ? item.serial_number.toString().trim().toLowerCase() : "";
+      
+      if (!sn) continue;
+      
+      if (existingSnRowMap.hasOwnProperty(sn)) {
+        // Update existing row
+        var rowIndex = existingSnRowMap[sn];
+        // Kolom D(3)=nomor_bl, E(4)=nama_pemasok, F(5)=tanggal_bl
+        data[rowIndex][3] = item.nomor_bl || "";
+        data[rowIndex][4] = item.nama_pemasok || "";
+        data[rowIndex][5] = item.tanggal_bl || "";
+        modifiedExisting = true;
+        updateCount++;
+      } else {
+        // Append new row
+        // A(0)=SN, B(1)=Kode, C(2)=Nama, D(3)=BL, E(4)=Vendor, F(5)=Tgl, G(6)=Status
+        newRows.push([
+          item.serial_number,
+          item.kode_barang || "",
+          item.nama_barang || "",
+          item.nomor_bl || "",
+          item.nama_pemasok || "",
+          item.tanggal_bl || "",
+          "Tersedia"
+        ]);
+        updateCount++;
+      }
+    }
+    
+    if (updateCount > 0) {
+      // Write back modified existing data if any
+      if (modifiedExisting && data.length > 0) {
+        dataRange.setValues(data);
+      }
+      
+      // Append new rows efficiently using getRange
+      if (newRows.length > 0) {
+        sheet.getRange(data.length + 1, 1, newRows.length, newRows[0].length).setValues(newRows);
+      }
+      
+      return {success: true, message: updateCount + " Serial Number berhasil diproses di database SN."};
+    } else {
+      return {success: false, message: "Tidak ada data yang valid untuk diproses."};
+    }
+    
+  } catch (error) {
+    return {success: false, message: "Error update database SN: " + error.message};
+  }
+}
+
+function updateHargaDariExcelServer(payload) {
+  try {
+    if (!payload || payload.length === 0) {
+      return {success: false, message: "Payload kosong."};
+    }
+    
+    var sheetSN = getSheetByName("master_sn");
+    var sheetBarang = getSheetByName("master_barang");
+    if (!sheetSN) return {success: false, message: "Sheet 'master_sn' tidak ditemukan."};
+    if (!sheetBarang) return {success: false, message: "Sheet 'master_barang' tidak ditemukan."};
+    
+    var dataRangeSN = sheetSN.getDataRange();
+    var dataSN = dataRangeSN.getValues();
+    
+    var dataRangeBarang = sheetBarang.getDataRange();
+    var dataBarang = dataRangeBarang.getValues();
+    
+    // Create dictionary for faster lookup: key = nomor_bl + "|" + kode_barang
+    var payloadMap = {};
+    var latestHargaBarang = {};
+    for (var i = 0; i < payload.length; i++) {
+      var item = payload[i];
+      if (item.nomor_bl && item.kode_barang) {
+        var key = item.nomor_bl.toString().trim().toLowerCase() + "|" + item.kode_barang.toString().trim().toLowerCase();
+        payloadMap[key] = item.harga_lama;
+        latestHargaBarang[item.kode_barang.toString().trim().toLowerCase()] = item.harga_lama;
+      }
+    }
+    
+    var updateCountSN = 0;
+    
+    // Looping data di master_sn
+    // Kolom D(3) = nomor_bl, B(1) = kode_barang, H(7) = harga_lama
+    for (var r = 1; r < dataSN.length; r++) {
+      var noBL = dataSN[r][3] ? dataSN[r][3].toString().trim().toLowerCase() : "";
+      var kodeBarang = dataSN[r][1] ? dataSN[r][1].toString().trim().toLowerCase() : "";
+      
+      if (noBL && kodeBarang) {
+        var key = noBL + "|" + kodeBarang;
+        if (payloadMap.hasOwnProperty(key)) {
+          dataSN[r][7] = payloadMap[key]; // Update kolom H (harga_lama)
+          updateCountSN++;
+        }
+      }
+    }
+    
+    var updateCountBarang = 0;
+    // Update master_barang
+    for (var b = 1; b < dataBarang.length; b++) {
+      var kBarang = dataBarang[b][0] ? dataBarang[b][0].toString().trim().toLowerCase() : "";
+      if (kBarang && latestHargaBarang.hasOwnProperty(kBarang)) {
+        dataBarang[b][4] = latestHargaBarang[kBarang]; // Update kolom E (Harga Modal)
+        updateCountBarang++;
+      }
+    }
+    
+    if (updateCountSN > 0 || updateCountBarang > 0) {
+      if (updateCountSN > 0) dataRangeSN.setValues(dataSN);
+      if (updateCountBarang > 0) dataRangeBarang.setValues(dataBarang);
+      return {success: true, message: updateCountSN + " baris histori SN dan " + updateCountBarang + " baris master barang berhasil diupdate harganya."};
+    } else {
+      return {success: false, message: "Tidak ada data (Kombinasi BL dan Kode Barang) yang cocok di master_sn maupun master_barang."};
+    }
+    
+  } catch (error) {
+    return {success: false, message: "Error update harga: " + error.message};
+  }
+}
+
+function updateReturKeteranganServer(sn, field, value) {
+  try {
+    var sheet = getSheetByName("retur");
+    if (!sheet) return {success: false, message: "Sheet 'retur' tidak ditemukan."};
+    
+    var dataRange = sheet.getDataRange();
+    var data = dataRange.getValues();
+    
+    for (var i = 1; i < data.length; i++) {
+      var currentSn = data[i][2] ? data[i][2].toString().trim() : "";
+      if (currentSn === sn) {
+        if (field === 'keterangan') {
+          data[i][7] = value;
+        } else if (field === 'keterangan_tambahan') {
+          data[i][8] = value;
+        }
+        
+        // Update hanya satu baris untuk efisiensi
+        sheet.getRange(i + 1, 1, 1, data[i].length).setValues([data[i]]);
+        return {success: true, message: "Berhasil update keterangan"};
+      }
+    }
+    
+    return {success: false, message: "SN tidak ditemukan di daftar retur"};
+  } catch(error) {
+    return {success: false, message: error.message};
+  }
+}
