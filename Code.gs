@@ -200,12 +200,40 @@ function getDashboardStatsServer() {
     // Ambil hanya 15 teratas
     var top15 = topPartsArray.slice(0, 15);
     
+    // Ambil data Request Cabang yang aktif (belum selesai)
+    var reqSheet = getSheetByName("request_cabang");
+    var reqData = reqSheet ? reqSheet.getDataRange().getValues() : [];
+    var activeRequests = [];
+    var processedReqIds = {};
+    
+    for (var r = 1; r < reqData.length; r++) {
+      var reqId = reqData[r][0];
+      var tglReq = reqData[r][1];
+      var cabangReq = reqData[r][2];
+      var statusReq = reqData[r][7] ? reqData[r][7].toString().trim().toLowerCase() : 'menunggu';
+      
+      // Ambil yang masih menunggu atau alokasi (belum selesai penuh atau ditolak penuh)
+      if (statusReq !== 'selesai' && statusReq !== 'ditolak' && reqId) {
+        if (!processedReqIds[reqId]) {
+          var dateStr = tglReq instanceof Date ? Utilities.formatDate(tglReq, Session.getScriptTimeZone(), "dd/MM/yyyy") : tglReq.toString();
+          activeRequests.push({
+            id_request: reqId,
+            tanggal: dateStr,
+            cabang: cabangReq,
+            status: reqData[r][7] || 'Menunggu'
+          });
+          processedReqIds[reqId] = true;
+        }
+      }
+    }
+    
     return {
       success: true,
       data: {
         totalCabang: uniqueCabang.length,
         snMasukHariIni: snMasukHariIni,
-        topParts: top15
+        topParts: top15,
+        activeRequests: activeRequests
       }
     };
   } catch (error) {
@@ -699,7 +727,7 @@ function getDashboardCabangStatsServer(cabang) {
           stats.totalBulanIni++; 
         }
         
-        if (status === "dalam proses") {
+        if (status === "menunggu" || status.includes("alokasi") || status.includes("proses")) {
           stats.dalamProses++;
         } else if (status === "selesai") {
           stats.selesai++;
@@ -800,6 +828,7 @@ function getRequestCabangServer(cabang) {
         }
         
         results.push({
+          rowId: i + 1, // Nomor baris di sheet request_cabang (untuk kemudahan update)
           id_request: row[0],
           tanggal: tgl,
           cabang: row[2],
@@ -1320,5 +1349,167 @@ function updateReturKeteranganServer(sn, field, value) {
     return {success: false, message: "SN tidak ditemukan di daftar retur"};
   } catch(error) {
     return {success: false, message: error.message};
+  }
+}
+
+function prosesAlokasiServer(payloadArray) {
+  try {
+    var reqSheet = getSheetByName("request_cabang");
+    var mbSheet = getSheetByName("master_barang");
+    
+    if (!reqSheet || !mbSheet) return {success: false, message: "Sheet tidak ditemukan."};
+    
+    var mbData = mbSheet.getDataRange().getValues();
+    var updateMBCount = 0;
+    
+    // 1. Potong Stok & SN di master_barang
+    for (var p = 0; p < payloadArray.length; p++) {
+      var pData = payloadArray[p];
+      if (pData.qty_alokasi > 0 && pData.kode_barang && pData.kode_barang !== '-') {
+        // Cari di master_barang
+        for (var j = 1; j < mbData.length; j++) {
+          if (mbData[j][0] && mbData[j][0].toString().trim().toLowerCase() === pData.kode_barang.toString().trim().toLowerCase()) {
+            
+            // Kolom C (2) = SN, Kolom D (3) = Stok
+            var existingSNStr = mbData[j][2] ? mbData[j][2].toString() : "";
+            var existingSNs = existingSNStr.split(/[\n,]+/).map(function(s){return s.trim()}).filter(function(s){return s!==""});
+            var currentStok = existingSNs.length > 0 ? existingSNs.length : (parseInt(mbData[j][3]) || 0);
+            
+            var snToDeduct = pData.sn_alokasi ? pData.sn_alokasi.split(/[\n,]+/).map(function(s){return s.trim()}).filter(function(s){return s!==""}) : [];
+            
+            // Kurangi SN jika ada input SN
+            if (snToDeduct.length > 0) {
+              for (var s = 0; s < snToDeduct.length; s++) {
+                var idx = existingSNs.indexOf(snToDeduct[s]);
+                if (idx !== -1) {
+                  existingSNs.splice(idx, 1);
+                }
+              }
+              mbData[j][2] = existingSNs.join(",\n");
+              mbData[j][3] = existingSNs.length;
+            } else {
+              // Jika tidak ada SN, kurangi angkanya saja
+              mbData[j][3] = Math.max(0, currentStok - pData.qty_alokasi);
+            }
+            
+            updateMBCount++;
+            break; // Lanjut ke payload berikutnya
+          }
+        }
+      }
+    }
+    
+    // Terapkan perubahan ke master_barang jika ada update
+    if (updateMBCount > 0) {
+       mbSheet.getDataRange().setValues(mbData);
+    }
+    
+    // 2. Update Status & Catatan di request_cabang
+    for (var r = 0; r < payloadArray.length; r++) {
+      var item = payloadArray[r];
+      // Kolom 8 (H) adalah status_request
+      reqSheet.getRange(item.rowId, 8).setValue(item.status_baru);
+      
+      // Update catatan (Kolom 9 / I) dengan info alokasi
+      if (item.qty_alokasi > 0) {
+        var currentCatatan = reqSheet.getRange(item.rowId, 9).getValue() || "";
+        var tambahan = "[Alokasi: " + item.qty_alokasi + "pcs]";
+        if (item.sn_alokasi) tambahan += " SN: " + item.sn_alokasi.replace(/\n/g, ", ");
+        
+        reqSheet.getRange(item.rowId, 9).setValue(currentCatatan ? (currentCatatan + " | " + tambahan) : tambahan);
+      } else if (item.status_baru === 'Ditolak') {
+        var cCatatan = reqSheet.getRange(item.rowId, 9).getValue() || "";
+        reqSheet.getRange(item.rowId, 9).setValue(cCatatan ? (cCatatan + " | [DITOLAK PUSAT]") : "[DITOLAK PUSAT]");
+      }
+    }
+    
+    // 3. Simpan pergerakan SN ke sheet riwayat_sn
+    var riwayatSheet = getSheetByName("riwayat_sn");
+    if (riwayatSheet) {
+      var tglSekarang = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd MMM yyyy HH:mm");
+      for (var r = 0; r < payloadArray.length; r++) {
+        var item = payloadArray[r];
+        if (item.qty_alokasi > 0 && item.sn_alokasi) {
+          // Ambil nama cabang dari kolom C (3) dan nama barang dari kolom E (5)
+          var cabangTujuan = reqSheet.getRange(item.rowId, 3).getValue();
+          var namaBarang = reqSheet.getRange(item.rowId, 5).getValue() || item.kode_barang;
+          
+          var snArray = item.sn_alokasi.split(/[\n,]+/).map(function(s){return s.trim()}).filter(function(s){return s!==""});
+          for (var s = 0; s < snArray.length; s++) {
+             riwayatSheet.appendRow([
+               snArray[s],
+               cabangTujuan,
+               namaBarang,
+               tglSekarang,
+               "Alokasi dari: " + item.id_request
+             ]);
+          }
+        }
+      }
+    }
+    
+    return {success: true, message: "Alokasi berhasil disimpan dan stok telah dipotong."};
+  } catch (error) {
+    return {success: false, message: "Error proses alokasi: " + error.message};
+  }
+}
+
+function getRiwayatSNServer() {
+  try {
+    var sheet = getSheetByName("riwayat_sn");
+    if (!sheet) return {success: false, message: "Sheet 'riwayat_sn' tidak ditemukan."};
+    
+    var data = sheet.getDataRange().getValues();
+    var results = [];
+    
+    // Asumsi baris 1 adalah header: serial_number, cabang_tujuan, nama_barang, tanggal_alokasi, keterangan
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] || data[i][2]) { // Cek jika SN atau Barang ada isinya
+        results.push({
+          sn: data[i][0].toString(),
+          cabang: data[i][1].toString(),
+          barang: data[i][2].toString(),
+          tanggal: data[i][3].toString(),
+          keterangan: data[i][4].toString()
+        });
+      }
+    }
+    
+    // Balik urutan agar data terbaru (paling bawah di sheet) muncul di paling atas (index 0)
+    results.reverse();
+    
+    return {success: true, data: results};
+  } catch (error) {
+    return {success: false, message: "Gagal mengambil data riwayat: " + error.message};
+  }
+}
+
+function deleteRequestCabangServer(id) {
+  try {
+    var sheet = getSheetByName("request_cabang");
+    if (!sheet) return {success: false, message: "Sheet 'request_cabang' tidak ditemukan."};
+    
+    var data = sheet.getDataRange().getValues();
+    var rowsToDelete = [];
+    
+    // Cari semua baris dengan ID request tersebut
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] === id) {
+        rowsToDelete.push(i + 1);
+      }
+    }
+    
+    // Hapus dari bawah ke atas agar index baris tidak bergeser
+    for (var j = rowsToDelete.length - 1; j >= 0; j--) {
+      sheet.deleteRow(rowsToDelete[j]);
+    }
+    
+    if (rowsToDelete.length > 0) {
+      return {success: true, message: "Request berhasil dihapus."};
+    } else {
+      return {success: false, message: "Request ID tidak ditemukan."};
+    }
+  } catch(error) {
+    return {success: false, message: "Gagal menghapus request: " + error.message};
   }
 }
