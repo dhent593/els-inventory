@@ -263,6 +263,12 @@
             <i class="fa-solid fa-rotate-left w-5 text-center"></i>
             <span class="font-bold">Retur Part</span>
           </button>
+          
+          <!-- Tombol Eksternal Arsip Retur -->
+          <a href="https://docs.google.com/spreadsheets/d/1JisHctaN0aU3GhYbNhniVEHYOIe2htwnVW2GHTg-umo/edit?usp=sharing" target="_blank" class="flex items-center gap-4 px-6 py-3 text-[14px] w-full text-left text-gray-500 hover:text-primary hover:bg-orange-50/50 transition-colors">
+            <i class="fa-solid fa-folder-open w-5 text-center"></i>
+            <span class="font-bold">Arsip Retur</span>
+          </a>
         </nav>
       </div>
 
@@ -512,20 +518,7 @@
         <div id="view-stock" class="view-section hidden">
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-6">
             <!-- Import Buttons -->
-            <div id="stock-import-container" class="flex flex-col md:flex-row gap-4 mb-6">
-              <input type="file" id="import-pembelian-file" accept=".xlsx, .xls" class="hidden" onchange="processImportPembelian(event)">
-              <button 
-                onclick="document.getElementById('import-pembelian-file').click()" 
-                ondragover="event.preventDefault(); this.classList.add('bg-blue-100');" 
-                ondragleave="this.classList.remove('bg-blue-100');" 
-                ondrop="event.preventDefault(); this.classList.remove('bg-blue-100'); document.getElementById('import-pembelian-file').files = event.dataTransfer.files; processImportPembelian({target: document.getElementById('import-pembelian-file')});"
-                class="flex-1 border-2 border-dashed border-blue-200 bg-blue-50/50 hover:bg-blue-50 text-blue-600 rounded-xl py-4 flex items-center justify-center gap-3 transition-colors">
-                <div class="w-10 h-10 rounded bg-blue-600 text-white flex items-center justify-center font-bold text-lg pointer-events-none"><i class="fa-regular fa-file-excel"></i></div>
-                <div class="text-left pointer-events-none">
-                  <div class="font-bold text-sm md:text-base">SN Masuk Pembelian</div>
-                  <div class="text-[11px] md:text-xs text-blue-400">Klik atau drop file excel di sini</div>
-                </div>
-              </button>
+            <div id="stock-import-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
               <input type="file" id="import-seri-file" accept=".xlsx, .xls" class="hidden" onchange="processImportSeri(event)">
               <button 
                 id="btn-import-seri"
@@ -536,8 +529,22 @@
                 class="flex-1 border-2 border-dashed border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 text-emerald-600 rounded-xl py-4 flex items-center justify-center gap-3 transition-colors">
                 <div class="w-10 h-10 rounded bg-emerald-500 text-white flex items-center justify-center font-bold text-lg pointer-events-none"><i class="fa-regular fa-file-excel"></i></div>
                 <div class="text-left pointer-events-none">
-                  <div class="font-bold text-sm md:text-base">Stock Nomor Seri/Produksi per Barang</div>
-                  <div class="text-[11px] md:text-xs text-emerald-400">Klik atau drop file excel di sini</div>
+                  <div class="font-bold text-sm md:text-base">1.Stock Nomor Seri/Produksi per Barang</div>
+                  <div class="text-[11px] md:text-xs text-emerald-400">Digunakan untuk update Stok & SN</div>
+                </div>
+              </button>
+
+              <input type="file" id="import-pembelian-file" accept=".xlsx, .xls" class="hidden" onchange="processImportPembelian(event)">
+              <button 
+                onclick="document.getElementById('import-pembelian-file').click()" 
+                ondragover="event.preventDefault(); this.classList.add('bg-blue-100');" 
+                ondragleave="this.classList.remove('bg-blue-100');" 
+                ondrop="event.preventDefault(); this.classList.remove('bg-blue-100'); document.getElementById('import-pembelian-file').files = event.dataTransfer.files; processImportPembelian({target: document.getElementById('import-pembelian-file')});"
+                class="flex-1 border-2 border-dashed border-blue-200 bg-blue-50/50 hover:bg-blue-50 text-blue-600 rounded-xl py-4 flex items-center justify-center gap-3 transition-colors">
+                <div class="w-10 h-10 rounded bg-blue-600 text-white flex items-center justify-center font-bold text-lg pointer-events-none"><i class="fa-regular fa-file-excel"></i></div>
+                <div class="text-left pointer-events-none">
+                  <div class="font-bold text-sm md:text-base">2.SN Masuk Pembelian</div>
+                  <div class="text-[11px] md:text-xs text-blue-400">Digunakan untuk Update BL dan Vendor</div>
                 </div>
               </button>
               
@@ -550,16 +557,46 @@
                 class="flex-1 border-2 border-dashed border-purple-200 bg-purple-50/50 hover:bg-purple-50 text-purple-600 rounded-xl py-4 flex items-center justify-center gap-3 transition-colors">
                 <div class="w-10 h-10 rounded bg-purple-600 text-white flex items-center justify-center font-bold text-lg pointer-events-none"><i class="fa-solid fa-tags"></i></div>
                 <div class="text-left pointer-events-none">
-                  <div class="font-bold text-sm md:text-base">Laporan Detail Pembelian</div>
-                  <div class="text-[11px] md:text-xs text-purple-400">Klik atau drop file excel di sini</div>
+                  <div class="font-bold text-sm md:text-base">3.Laporan Detail Pembelian</div>
+                  <div class="text-[11px] md:text-xs text-purple-400">Digunakan untuk update Harga Modal</div>
+                </div>
+              </button>
+
+              <input type="file" id="update-harga-jual-file" accept=".xlsx, .xls" class="hidden" onchange="processUpdateHargaJual(event)">
+              <button 
+                onclick="document.getElementById('update-harga-jual-file').click()" 
+                ondragover="event.preventDefault(); this.classList.add('bg-rose-100');" 
+                ondragleave="this.classList.remove('bg-rose-100');" 
+                ondrop="event.preventDefault(); this.classList.remove('bg-rose-100'); document.getElementById('update-harga-jual-file').files = event.dataTransfer.files; processUpdateHargaJual({target: document.getElementById('update-harga-jual-file')});"
+                class="flex-1 border-2 border-dashed border-rose-200 bg-rose-50/50 hover:bg-rose-50 text-rose-600 rounded-xl py-4 flex items-center justify-center gap-3 transition-colors">
+                <div class="w-10 h-10 rounded bg-rose-500 text-white flex items-center justify-center font-bold text-lg pointer-events-none"><i class="fa-solid fa-money-bill-wave"></i></div>
+                <div class="text-left pointer-events-none">
+                  <div class="font-bold text-sm md:text-base">4.Update Harga Jual</div>
+                  <div class="text-[11px] md:text-xs text-rose-400">Digunakan untuk update Harga Jual</div>
                 </div>
               </button>
             </div>
             
-            <!-- Table Header -->
+            <!-- Table Header & Controls -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-              <input type="text" id="search-stock" onkeyup="filterStock()" class="border border-gray-300 rounded-lg px-4 py-2 text-sm w-full md:w-[300px] outline-none focus:border-blue-500 bg-gray-50/50" placeholder="Cari stok barang di sini...">
-              <button onclick="loadStockData()" class="border border-gray-300 rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-50 w-full md:w-auto"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+              <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto flex-1">
+                <input type="text" id="search-stock" onkeyup="filterStock()" class="border border-gray-300 rounded-lg px-4 py-2 text-sm w-full md:w-[250px] outline-none focus:border-blue-500 bg-gray-50/50" placeholder="Cari stok barang...">
+                
+                <select id="filter-stock-status" onchange="filterStock()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full md:w-auto outline-none focus:border-blue-500 bg-white">
+                  <option value="all">Semua Stok</option>
+                  <option value="ready">Stok Ready (> 0)</option>
+                  <option value="empty">Stok Kosong (= 0)</option>
+                </select>
+                
+                <select id="sort-stock" onchange="filterStock()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full md:w-auto outline-none focus:border-blue-500 bg-white">
+                  <option value="default">Urutkan: Default</option>
+                  <option value="az">Nama: A - Z</option>
+                  <option value="za">Nama: Z - A</option>
+                  <option value="price_asc">Harga Jual: Terendah</option>
+                  <option value="price_desc">Harga Jual: Tertinggi</option>
+                </select>
+              </div>
+              <button onclick="loadStockData()" class="border border-gray-300 rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-50 w-full md:w-auto shrink-0 shadow-sm"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
             </div>
             
             <div class="overflow-auto max-h-[calc(100vh-280px)] border border-gray-100 rounded-xl relative">
@@ -590,7 +627,7 @@
         <div id="view-request" class="view-section hidden">
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <input type="text" class="border border-gray-300 rounded-lg px-4 py-2 text-sm w-full md:w-[400px] outline-none focus:border-primary bg-gray-50/50" placeholder="Cari ID, Cabang, atau Status...">
+              <input type="text" id="search-request" class="border border-gray-300 rounded-lg px-4 py-2 text-sm w-full md:w-[400px] outline-none focus:border-primary bg-gray-50/50" placeholder="Cari ID, Cabang, atau Status...">
               <button class="border border-gray-300 rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-50 w-full md:w-auto"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
             </div>
             
@@ -802,9 +839,17 @@
             </div>
 
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-              <input type="text" id="search-opname" onkeyup="filterOpname()" class="border border-gray-300 rounded-lg px-4 py-2 text-sm w-full md:w-[300px] outline-none focus:border-orange-500 bg-gray-50/50" placeholder="Cari barang atau SN secara manual...">
+              <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto flex-1">
+                <input type="text" id="search-opname" onkeyup="filterOpname()" class="border border-gray-300 rounded-lg px-4 py-2 text-sm w-full md:w-[250px] outline-none focus:border-orange-500 bg-gray-50/50" placeholder="Cari barang atau SN manual...">
+                
+                <select id="filter-opname-status" onchange="filterOpname()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full md:w-auto outline-none focus:border-orange-500 bg-white">
+                  <option value="all">Semua Status</option>
+                  <option value="ADA">Status: ADA</option>
+                  <option value="Belum Scan">Status: Belum Scan</option>
+                </select>
+              </div>
               
-              <div class="flex gap-2 w-full md:w-auto">
+              <div class="flex gap-2 w-full md:w-auto shrink-0 flex-wrap md:flex-nowrap justify-end">
                 <button onclick="simpanOpname()" class="flex-1 md:flex-none bg-orange-500 text-white rounded-lg px-2 py-1.5 md:px-4 md:py-2 text-[11px] md:text-sm hover:bg-orange-600 font-medium transition-colors shadow-sm"><i class="fa-solid fa-save mr-1 md:mr-2"></i> Simpan</button>
                 <button onclick="loadOpnameData()" class="flex-1 md:flex-none border border-gray-300 rounded-lg px-2 py-1.5 md:px-3 md:py-2 text-[11px] md:text-sm text-gray-500 hover:bg-gray-50"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
                 <input type="file" id="import-opname-file" accept=".xlsx, .xls" class="hidden" onchange="processOpnameImport(event)">
@@ -842,12 +887,17 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
               
               <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                 <select id="filter-retur" class="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                 <select id="filter-retur" onchange="filterRetur()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary bg-white">
                    <option value="">Semua Filter</option>
+                   <option value="Y">Sudah Diambil</option>
+                   <option value="N">Belum Diambil</option>
                  </select>
 
                  <button onclick="printRetur()" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
                    <i class="fa-solid fa-print"></i> Print Data Retur
+                 </button>
+                 <button onclick="archiveCompletedRetur()" class="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                   <i class="fa-solid fa-box-archive"></i> Arsipkan Selesai
                  </button>
                  <button onclick="openReturModal()" class="bg-orange-500 hover:bg-orange-600 text-white border border-orange-500 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
                    <i class="fa-solid fa-plus"></i> Add Retur Part
@@ -869,10 +919,10 @@
                     <th class="py-3 px-4">Serial Number</th>
                     <th class="py-3 px-4">Vendor</th>
                     <th class="py-3 px-4">BL</th>
-                    <th class="py-3 px-4">Tanggal BL</th>
                     <th class="py-3 px-4">Harga Lama</th>
                     <th class="py-3 px-4">Keterangan</th>
                     <th class="py-3 px-4">Keterangan Tambahan</th>
+                    <th class="py-3 px-4 text-center">Aksi</th>
                   </tr>
                 </thead>
                 <tbody id="tbl-retur-body" class="divide-y divide-gray-100 text-gray-600 bg-white">
@@ -1217,6 +1267,71 @@
             </div>
           </form>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT RETUR MODAL -->
+  <div id="edit-retur-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50 transition-opacity opacity-0" id="edit-retur-backdrop" onclick="closeEditReturModal()"></div>
+    <div class="bg-white rounded-2xl shadow-xl w-[95%] max-w-[500px] flex flex-col z-10 transform scale-95 opacity-0 transition-all duration-300" id="edit-retur-modal-content">
+      <!-- Header -->
+      <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-gray-800 text-lg">Edit Retur Part</h3>
+            <p class="text-xs text-gray-500">Ubah data untuk Serial Number ini</p>
+          </div>
+        </div>
+        <button onclick="closeEditReturModal()" class="text-gray-400 hover:text-red-500 transition-colors text-xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <!-- Body -->
+      <div class="p-6 flex-1 overflow-auto bg-gray-50/50">
+        <form onsubmit="event.preventDefault(); submitEditReturPart();">
+          <div class="mb-4">
+            <label class="block text-gray-700 text-xs font-bold mb-2 uppercase">Serial Number</label>
+            <input type="text" id="edit-retur-sn" readonly class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm bg-gray-100 font-mono shadow-sm cursor-not-allowed">
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 text-xs font-bold mb-2 uppercase">Vendor</label>
+            <input type="text" id="edit-retur-vendor" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-blue-500 bg-white shadow-sm">
+          </div>
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-gray-700 text-xs font-bold mb-2 uppercase">BL</label>
+              <input type="text" id="edit-retur-bl" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-blue-500 bg-white shadow-sm">
+            </div>
+            <div>
+              <label class="block text-gray-700 text-xs font-bold mb-2 uppercase">Tanggal BL</label>
+              <input type="text" id="edit-retur-tanggal" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-blue-500 bg-white shadow-sm">
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 text-xs font-bold mb-2 uppercase">Harga Lama</label>
+            <input type="text" id="edit-retur-harga" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-blue-500 bg-white shadow-sm">
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 text-xs font-bold mb-2 uppercase">Keterangan</label>
+            <input type="text" id="edit-retur-ket" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-blue-500 bg-white shadow-sm">
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 text-xs font-bold mb-2 uppercase">Keterangan Tambahan</label>
+            <input type="text" id="edit-retur-ket-tambahan" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-blue-500 bg-white shadow-sm">
+          </div>
+          
+          <div class="flex gap-3 pt-4 border-t border-gray-100">
+            <button type="button" onclick="closeEditReturModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm transition-colors">Batal</button>
+            <button type="submit" id="edit-retur-btn-submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold text-sm transition-colors flex justify-center items-center gap-2 shadow-sm">
+              <i class="fa-solid fa-save"></i> Simpan
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -2430,16 +2545,39 @@
     
     function filterStock() {
       const query = document.getElementById('search-stock').value.toLowerCase();
-      if (!query) {
-        renderStockTable(globalStockData);
-        return;
+      const statusFilter = document.getElementById('filter-stock-status').value;
+      const sortMethod = document.getElementById('sort-stock').value;
+      
+      // 1. Copy array agar tidak merusak data asli saat disorting
+      let filtered = [...globalStockData];
+      
+      // 2. Filter by Query (Pencarian Teks)
+      if (query) {
+        filtered = filtered.filter(item => 
+          item.kode.toLowerCase().includes(query) ||
+          item.nama.toLowerCase().includes(query)
+        );
       }
       
-      const filtered = globalStockData.filter(item => 
-        item.kode.toLowerCase().includes(query) ||
-        item.nama.toLowerCase().includes(query)
-      );
+      // 3. Filter by Status Stok
+      if (statusFilter === 'ready') {
+        filtered = filtered.filter(item => item.stok > 0);
+      } else if (statusFilter === 'empty') {
+        filtered = filtered.filter(item => item.stok === 0);
+      }
       
+      // 4. Sortir
+      if (sortMethod === 'az') {
+        filtered.sort((a, b) => a.nama.localeCompare(b.nama));
+      } else if (sortMethod === 'za') {
+        filtered.sort((a, b) => b.nama.localeCompare(a.nama));
+      } else if (sortMethod === 'price_asc') {
+        filtered.sort((a, b) => (a.harga_jual || 0) - (b.harga_jual || 0));
+      } else if (sortMethod === 'price_desc') {
+        filtered.sort((a, b) => (b.harga_jual || 0) - (a.harga_jual || 0));
+      }
+      
+      // 5. Render ke tabel
       renderStockTable(filtered);
     }
     
@@ -2544,16 +2682,24 @@
     
     function filterOpname() {
       const query = document.getElementById('search-opname').value.toLowerCase();
-      if (!query) {
-        renderOpnameTable(globalOpnameData);
-        return;
+      const statusFilter = document.getElementById('filter-opname-status').value;
+      
+      let filtered = [...globalOpnameData];
+      
+      if (query) {
+        filtered = filtered.filter(item => 
+          item.kode.toLowerCase().includes(query) ||
+          item.nama.toLowerCase().includes(query) ||
+          item.serial_number.toLowerCase().includes(query)
+        );
       }
       
-      const filtered = globalOpnameData.filter(item => 
-        item.kode.toLowerCase().includes(query) ||
-        item.nama.toLowerCase().includes(query) ||
-        item.serial_number.toLowerCase().includes(query)
-      );
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter(item => {
+          const itemStatus = (item.status || 'Belum Scan').toLowerCase();
+          return itemStatus === statusFilter.toLowerCase();
+        });
+      }
       
       renderOpnameTable(filtered);
     }
@@ -3182,6 +3328,101 @@
       reader.readAsArrayBuffer(file);
     }
 
+    function processUpdateHargaJual(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      
+      Swal.fire({
+        title: 'Memproses Update Harga Jual...',
+        html: 'Harap tunggu, sedang membaca data Excel...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+          
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false});
+          
+          const payload = [];
+          let headerRowIndex = -1;
+          let colKodeBarang = -1;
+          let colHargaJual = -1;
+          
+          for (let r = 0; r < Math.min(jsonData.length, 10); r++) {
+            const row = jsonData[r];
+            if (!row) continue;
+            
+            for (let c = 0; c < row.length; c++) {
+              const colName = String(row[c] || "").toLowerCase().trim().replace(/_/g, " ");
+              if (colName === "kode barang") colKodeBarang = c;
+              if (colName === "harga jual") colHargaJual = c;
+            }
+            
+            if (colKodeBarang !== -1 && colHargaJual !== -1) {
+              headerRowIndex = r;
+              break;
+            }
+          }
+          
+          if (headerRowIndex === -1) {
+            throw new Error("Format Excel tidak valid. Gagal menemukan kolom 'kode_barang' dan 'harga_jual'.");
+          }
+          
+          for (let r = headerRowIndex + 1; r < jsonData.length; r++) {
+            const row = jsonData[r];
+            if (!row || row.length === 0) continue;
+            
+            const kodeBarang = String(row[colKodeBarang] || "").trim();
+            let hargaStr = String(row[colHargaJual] || "").replace(/[^0-9.-]+/g, ""); // extract numbers
+            const harga = hargaStr ? parseFloat(hargaStr) : 0;
+            
+            if (kodeBarang && harga > 0) {
+              payload.push({
+                kode_barang: kodeBarang,
+                harga_jual: harga
+              });
+            }
+          }
+          
+          if (payload.length === 0) {
+            throw new Error("Tidak ada data Harga valid yang ditemukan di file Excel.");
+          }
+          
+          google.script.run.withSuccessHandler(function(res) {
+            if (res.success) {
+              Swal.fire('Berhasil!', res.message, 'success');
+              document.getElementById('update-harga-jual-file').value = ""; // reset
+              if (typeof loadStockData === "function") loadStockData(); // refresh data tabel
+            } else {
+              Swal.fire('Gagal Update Harga', res.message, 'error');
+              document.getElementById('update-harga-jual-file').value = "";
+            }
+          }).withFailureHandler(function(err) {
+            Swal.fire('Error!', 'Gagal menghubungi server.', 'error');
+            document.getElementById('update-harga-jual-file').value = "";
+          }).updateHargaJualDariExcelServer(payload);
+
+          
+        } catch (err) {
+          Swal.fire('Error Import', err.message, 'error');
+          console.error(err);
+          document.getElementById('update-harga-file').value = "";
+        }
+      };
+      
+      reader.readAsArrayBuffer(file);
+    }
+
     
     // ==========================================
 // LOGIKA CETAK BARCODE (PRINT MODAL)
@@ -3753,6 +3994,13 @@
 
     function renderReturTable(data) {
       const tbody = document.getElementById('tbl-retur-body');
+      
+      // Update judul dengan jumlah item
+      const topbarTitle = document.getElementById('topbar-title');
+      if (topbarTitle && topbarTitle.innerText.includes('Retur Part')) {
+        topbarTitle.innerText = `Retur Part (${data.length} item)`;
+      }
+      
       if (data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-gray-400 font-medium">Belum ada data retur.</td></tr>';
         return;
@@ -3760,18 +4008,35 @@
       
       let html = '';
       data.forEach(item => {
-        html += '<tr class="hover:bg-gray-50 transition-colors">' +
+        // Stringify item.serial_number for safe passing to inline onClick handler
+        const safeSN = item.serial_number.replace(/'/g, "\\'");
+        
+        const isDiambil = item.status_diambil === 'Y';
+        const rowClass = isDiambil ? 'bg-emerald-50 hover:bg-emerald-100 transition-colors' : 'hover:bg-gray-50 transition-colors bg-white';
+        const checkIconClass = isDiambil ? 'fa-solid fa-circle-check text-emerald-500 hover:text-emerald-600' : 'fa-solid fa-circle-check text-gray-300 hover:text-emerald-400';
+        
+        html += '<tr class="' + rowClass + '">' +
             '<td class="py-3 px-4">' +
               '<div class="font-medium">' + item.nama_barang + '</div>' +
               '<div class="text-[10px] text-gray-500 font-mono mt-1">' + item.kode_barang + '</div>' +
             '</td>' +
             '<td class="py-3 px-4 font-mono">' + item.serial_number + '</td>' +
             '<td class="py-3 px-4">' + item.vendor + '</td>' +
-            '<td class="py-3 px-4">' + item.bl + '</td>' +
-            '<td class="py-3 px-4">' + item.tanggal_bl + '</td>' +
+            '<td class="py-3 px-4">' +
+              '<div class="font-medium">' + item.bl + '</div>' +
+              '<div class="text-[10px] text-gray-500 mt-1">' + item.tanggal_bl + '</div>' +
+            '</td>' +
             '<td class="py-3 px-4 whitespace-nowrap">' + (item.harga_lama ? 'Rp ' + Number(item.harga_lama).toLocaleString('id-ID') : '-') + '</td>' +
-            '<td class="py-2 px-2 w-48"><input type="text" class="border border-gray-300 rounded px-2 py-1.5 text-xs w-full outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all bg-white" placeholder="Keterangan..." value="' + (item.keterangan || '').replace(/"/g, '&quot;') + '" onchange="updateReturKeterangan(\'' + item.serial_number + '\', \'keterangan\', this.value)"></td>' +
-            '<td class="py-2 px-2 w-48"><input type="text" class="border border-gray-300 rounded px-2 py-1.5 text-xs w-full outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all bg-white" placeholder="Ket. Tambahan..." value="' + (item.keterangan_tambahan || '').replace(/"/g, '&quot;') + '" onchange="updateReturKeterangan(\'' + item.serial_number + '\', \'keterangan_tambahan\', this.value)"></td>' +
+            '<td class="py-2 px-2 w-48"><input type="text" class="border border-gray-300 rounded px-2 py-1.5 text-xs w-full outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all ' + (isDiambil ? 'bg-emerald-50' : 'bg-white') + '" placeholder="Keterangan..." value="' + (item.keterangan || '').replace(/"/g, '&quot;') + '" onchange="updateReturKeterangan(\'' + item.serial_number + '\', \'keterangan\', this.value)"></td>' +
+            '<td class="py-2 px-2 w-48"><input type="text" class="border border-gray-300 rounded px-2 py-1.5 text-xs w-full outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all ' + (isDiambil ? 'bg-emerald-50' : 'bg-white') + '" placeholder="Ket. Tambahan..." value="' + (item.keterangan_tambahan || '').replace(/"/g, '&quot;') + '" onchange="updateReturKeterangan(\'' + item.serial_number + '\', \'keterangan_tambahan\', this.value)"></td>' +
+            '<td class="py-3 px-4 text-center">' +
+              '<div class="flex items-center justify-center gap-3">' +
+                '<i class="' + checkIconClass + ' cursor-pointer text-lg" onclick="toggleStatusDiambil(\'' + safeSN + '\', \'' + item.status_diambil + '\')" title="Tandai Diambil"></i>' +
+                '<i class="fa-solid fa-box-archive text-gray-400 hover:text-purple-600 cursor-pointer text-lg" onclick="archiveRetur(\'' + safeSN + '\')" title="Arsipkan Part"></i>' +
+                '<i class="fa-solid fa-pen-to-square text-blue-500 hover:text-blue-700 cursor-pointer text-lg" onclick="editRetur(\'' + safeSN + '\')" title="Edit"></i>' +
+                '<i class="fa-solid fa-trash text-red-500 hover:text-red-700 cursor-pointer text-lg" onclick="deleteRetur(\'' + safeSN + '\')" title="Hapus"></i>' +
+              '</div>' +
+            '</td>' +
           '</tr>';
       });
       tbody.innerHTML = html;
@@ -3779,12 +4044,23 @@
     
     function filterRetur() {
       const keyword = document.getElementById('search-retur').value.toLowerCase();
+      const filterStatus = document.getElementById('filter-retur').value;
+      
       const filtered = returData.filter(item => {
-        return (item.kode_barang && item.kode_barang.toLowerCase().includes(keyword)) ||
-               (item.nama_barang && item.nama_barang.toLowerCase().includes(keyword)) ||
-               (item.serial_number && item.serial_number.toLowerCase().includes(keyword)) ||
-               (item.vendor && item.vendor.toLowerCase().includes(keyword)) ||
-               (item.bl && item.bl.toLowerCase().includes(keyword));
+        const matchKeyword = (item.kode_barang && item.kode_barang.toLowerCase().includes(keyword)) ||
+                             (item.nama_barang && item.nama_barang.toLowerCase().includes(keyword)) ||
+                             (item.serial_number && item.serial_number.toLowerCase().includes(keyword)) ||
+                             (item.vendor && item.vendor.toLowerCase().includes(keyword)) ||
+                             (item.bl && item.bl.toLowerCase().includes(keyword));
+                             
+        let matchStatus = true;
+        if (filterStatus === 'Y') {
+          matchStatus = item.status_diambil === 'Y';
+        } else if (filterStatus === 'N') {
+          matchStatus = item.status_diambil !== 'Y';
+        }
+        
+        return matchKeyword && matchStatus;
       });
       renderReturTable(filtered);
     }
@@ -4029,6 +4305,276 @@
          }
        }).addReturPartServer(payload);
     }
+    function editRetur(sn) {
+      const part = returData.find(p => p.serial_number === sn);
+      if (!part) return;
+      
+      const modal = document.getElementById('edit-retur-modal');
+      const backdrop = document.getElementById('edit-retur-backdrop');
+      const content = document.getElementById('edit-retur-modal-content');
+      
+      // Populate data
+      document.getElementById('edit-retur-sn').value = part.serial_number;
+      document.getElementById('edit-retur-vendor').value = part.vendor || '';
+      document.getElementById('edit-retur-bl').value = part.bl || '';
+      document.getElementById('edit-retur-tanggal').value = part.tanggal_bl || '';
+      document.getElementById('edit-retur-harga').value = part.harga_lama || '';
+      document.getElementById('edit-retur-ket').value = part.keterangan || '';
+      document.getElementById('edit-retur-ket-tambahan').value = part.keterangan_tambahan || '';
+      
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        backdrop.classList.remove('opacity-0');
+        backdrop.classList.add('opacity-100');
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+      }, 10);
+    }
+    
+    function closeEditReturModal() {
+      const backdrop = document.getElementById('edit-retur-backdrop');
+      const content = document.getElementById('edit-retur-modal-content');
+      
+      backdrop.classList.remove('opacity-100');
+      backdrop.classList.add('opacity-0');
+      content.classList.remove('scale-100', 'opacity-100');
+      content.classList.add('scale-95', 'opacity-0');
+      
+      setTimeout(() => {
+        document.getElementById('edit-retur-modal').classList.add('hidden');
+      }, 300);
+    }
+    
+    function submitEditReturPart() {
+      const btn = document.getElementById('edit-retur-btn-submit');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+      
+      const payload = {
+        serial_number: document.getElementById('edit-retur-sn').value,
+        vendor: document.getElementById('edit-retur-vendor').value,
+        bl: document.getElementById('edit-retur-bl').value,
+        tanggal_bl: document.getElementById('edit-retur-tanggal').value,
+        harga_lama: document.getElementById('edit-retur-harga').value,
+        keterangan: document.getElementById('edit-retur-ket').value,
+        keterangan_tambahan: document.getElementById('edit-retur-ket-tambahan').value
+      };
+      
+      google.script.run.withSuccessHandler(function(res) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-save"></i> Simpan';
+        
+        if (res.success) {
+          Swal.fire({
+             title: 'Berhasil',
+             text: res.message,
+             icon: 'success',
+             confirmButtonColor: '#f97316'
+          });
+          closeEditReturModal();
+          loadReturData();
+        } else {
+          Swal.fire('Gagal', res.message, 'error');
+        }
+      }).editReturServer(payload);
+    }
+    
+    function deleteRetur(sn) {
+      Swal.fire({
+        title: 'Hapus Retur?',
+        text: `Anda yakin ingin menghapus part dengan SN ${sn}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: 'Menghapus...',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+          
+          google.script.run.withSuccessHandler(function(res) {
+            if (res.success) {
+              Swal.fire({
+                title: 'Terhapus!',
+                text: res.message,
+                icon: 'success',
+                confirmButtonColor: '#f97316'
+              });
+              loadReturData();
+            } else {
+              Swal.fire('Gagal', res.message, 'error');
+            }
+          }).deleteReturServer(sn);
+        }
+      });
+    }
+
+    function toggleStatusDiambil(sn, currentStatus) {
+      const newStatus = currentStatus === 'Y' ? '' : 'Y';
+      
+      Swal.fire({
+        title: 'Menyimpan...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      
+      google.script.run.withSuccessHandler(function(res) {
+        if (res.success) {
+          const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+          });
+          Toast.fire({
+            icon: 'success',
+            title: newStatus === 'Y' ? 'Ditandai sudah diambil' : 'Tanda diambil dibatalkan'
+          });
+          
+          // Update local data
+          const part = returData.find(p => p.serial_number === sn);
+          if (part) part.status_diambil = newStatus;
+          
+          // Re-render table specifically using filterRetur to maintain current filter
+          filterRetur();
+        } else {
+          Swal.fire('Gagal', res.message, 'error');
+        }
+      }).toggleReturStatusServer(sn, newStatus);
+    }
+
+    function archiveRetur(sn) {
+      Swal.fire({
+        title: 'Arsipkan Part?',
+        text: `Part dengan SN ${sn} akan dipindahkan ke arsip.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#8b5cf6', // purple-500
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Arsipkan!',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: 'Memindahkan ke Arsip...',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+          
+          google.script.run.withSuccessHandler(function(res) {
+            if (res.success) {
+              Swal.fire({
+                title: 'Diarsipkan!',
+                text: res.message,
+                icon: 'success',
+                confirmButtonColor: '#8b5cf6'
+              });
+              loadReturData();
+            } else {
+              Swal.fire('Gagal', res.message, 'error');
+            }
+          }).archiveReturServer(sn);
+        }
+      });
+    }
+
+    function archiveCompletedRetur() {
+      const completedCount = returData.filter(p => p.status_diambil === 'Y').length;
+      
+      if (completedCount === 0) {
+        Swal.fire('Info', 'Tidak ada part dengan status "Sudah Diambil" untuk diarsipkan.', 'info');
+        return;
+      }
+      
+      Swal.fire({
+        title: 'Arsipkan Massal?',
+        text: `Terdapat ${completedCount} part yang sudah diambil. Pindahkan semua ke arsip?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#8b5cf6',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Arsipkan Semua!',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: 'Memindahkan ke Arsip...',
+            text: 'Mohon tunggu, proses ini mungkin membutuhkan waktu...',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+          
+          google.script.run.withSuccessHandler(function(res) {
+            if (res.success) {
+              Swal.fire({
+                title: 'Selesai!',
+                text: res.message,
+                icon: 'success',
+                confirmButtonColor: '#8b5cf6'
+              });
+              loadReturData();
+            } else {
+              Swal.fire('Gagal', res.message, 'error');
+            }
+          }).archiveCompletedReturServer();
+        }
+      });
+    }
+
+    // ==========================================
+    // GLOBAL SEARCH SHORTCUT (Ctrl + F)
+    // ==========================================
+    document.addEventListener('keydown', function(e) {
+      // Deteksi kombinasi Ctrl+F (Windows/Linux) atau Cmd+F (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        
+        // Pemetaan dari ID View Aktif ke ID Input Pencariannya
+        const searchInputMap = {
+          'view-sn-masuk': 'search-sn-masuk',
+          'view-stock': 'search-stock',
+          'view-request': 'search-request',
+          'view-riwayat-request': 'search-riwayat-req',
+          'view-opname': 'search-opname',
+          'view-retur': 'search-retur'
+        };
+
+        // Cari elemen view section yang saat ini tidak disembunyikan (sedang aktif)
+        const activeView = document.querySelector('.view-section:not(.hidden)');
+        
+        if (activeView) {
+          const viewId = activeView.id;
+          const searchInputId = searchInputMap[viewId];
+          
+          if (searchInputId) {
+            const searchInputElement = document.getElementById(searchInputId);
+            if (searchInputElement) {
+              e.preventDefault(); // Batalkan fungsi pencarian bawaan browser
+              
+              // Jika view-nya panjang, auto scroll halus ke elemen pencarian
+              searchInputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              
+              // Fokuskan kursor ke dalam search bar dan blok semua teks di dalamnya
+              searchInputElement.focus();
+              searchInputElement.select();
+            }
+          }
+        }
+      }
+    });
   </script>
 </body>
 </html>

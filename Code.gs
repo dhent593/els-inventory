@@ -844,12 +844,12 @@ function getReturDataServer() {
           tanggal_bl: data[i][5] instanceof Date ? Utilities.formatDate(data[i][5], Session.getScriptTimeZone(), "dd-MM-yyyy") : data[i][5].toString().trim(),
           harga_lama: data[i][6].toString().trim(),
           keterangan: data[i][7].toString().trim(),
-          keterangan_tambahan: data[i][8] ? data[i][8].toString().trim() : ""
+          keterangan_tambahan: data[i][8] ? data[i][8].toString().trim() : "",
+          status_diambil: data[i][9] ? data[i][9].toString().trim() : ""
         });
       }
     }
-    return {success: true, data: listRetur};
-    return {success: true, data: listRetur};
+    return {success: true, data: listRetur.reverse()};
   } catch (error) {
     return {success: false, message: "Gagal memuat data Retur: " + error.message};
   }
@@ -872,12 +872,166 @@ function addReturPartServer(item) {
       item.tanggal_bl || "", // tanggal_bl
       item.harga_lama || "", // harga_lama
       "", // keterangan
-      ""  // keterangan_tambahan
+      "", // keterangan_tambahan
+      ""  // status_diambil
     ]);
     
     return {success: true, message: "Part berhasil ditambahkan ke daftar retur."};
   } catch (error) {
     return {success: false, message: "Gagal menyimpan data retur: " + error.message};
+  }
+}
+
+function toggleReturStatusServer(sn, newStatus) {
+  try {
+    var sheet = getSheetByName("retur");
+    if (!sheet) {
+        return {success: false, message: "Sheet 'retur' tidak ditemukan."};
+    }
+    
+    var data = sheet.getDataRange().getValues();
+    var targetSN = sn.toString().trim().toLowerCase();
+    
+    for (var i = 1; i < data.length; i++) {
+      var snCurrent = data[i][2] ? data[i][2].toString().trim().toLowerCase() : "";
+      
+      if (snCurrent === targetSN) {
+        var rowIndex = i + 1;
+        // Kolom J = kolom ke-10
+        sheet.getRange(rowIndex, 10).setValue(newStatus);
+        return {success: true, message: "Status retur berhasil diperbarui."};
+      }
+    }
+    
+    return {success: false, message: "Data retur dengan SN tersebut tidak ditemukan."};
+  } catch (error) {
+    return {success: false, message: "Gagal memperbarui status retur: " + error.message};
+  }
+}
+
+function editReturServer(payload) {
+  try {
+    var sheet = getSheetByName("retur");
+    if (!sheet) {
+        return {success: false, message: "Sheet 'retur' tidak ditemukan."};
+    }
+    
+    var data = sheet.getDataRange().getValues();
+    var snToEdit = payload.serial_number.toString().trim().toLowerCase();
+    
+    // Looping dari baris kedua (lewati header)
+    for (var i = 1; i < data.length; i++) {
+      var snCurrent = data[i][2] ? data[i][2].toString().trim().toLowerCase() : "";
+      
+      if (snCurrent === snToEdit) {
+        var rowIndex = i + 1; // getRange 1-indexed
+        // Kolom di retur: 
+        // 1=A(kode_barang), 2=B(nama_barang), 3=C(serial_number)
+        // 4=D(vendor), 5=E(bl), 6=F(tanggal_bl), 7=G(harga_lama), 8=H(keterangan), 9=I(keterangan_tambahan)
+        sheet.getRange(rowIndex, 4).setValue(payload.vendor);
+        sheet.getRange(rowIndex, 5).setValue(payload.bl);
+        sheet.getRange(rowIndex, 6).setValue(payload.tanggal_bl);
+        sheet.getRange(rowIndex, 7).setValue(payload.harga_lama);
+        sheet.getRange(rowIndex, 8).setValue(payload.keterangan);
+        sheet.getRange(rowIndex, 9).setValue(payload.keterangan_tambahan);
+        
+        return {success: true, message: "Data retur berhasil diperbarui!"};
+      }
+    }
+    
+    return {success: false, message: "Data retur dengan SN tersebut tidak ditemukan."};
+  } catch (error) {
+    return {success: false, message: "Gagal memperbarui data retur: " + error.message};
+  }
+}
+
+function deleteReturServer(sn) {
+  try {
+    var sheet = getSheetByName("retur");
+    if (!sheet) {
+        return {success: false, message: "Sheet 'retur' tidak ditemukan."};
+    }
+    
+    var data = sheet.getDataRange().getValues();
+    var snToDelete = sn.toString().trim().toLowerCase();
+    
+    for (var i = 1; i < data.length; i++) {
+      var snCurrent = data[i][2] ? data[i][2].toString().trim().toLowerCase() : "";
+      
+      if (snCurrent === snToDelete) {
+        sheet.deleteRow(i + 1);
+        return {success: true, message: "Data retur berhasil dihapus!"};
+      }
+    }
+    
+    return {success: false, message: "Data retur dengan SN tersebut tidak ditemukan."};
+  } catch (error) {
+    return {success: false, message: "Gagal menghapus data retur: " + error.message};
+  }
+}
+
+function archiveReturServer(sn) {
+  try {
+    var sheetRetur = getSheetByName("retur");
+    var sheetArsip = getSheetByName("arsip_retur");
+    
+    if (!sheetRetur || !sheetArsip) {
+        return {success: false, message: "Sheet 'retur' atau 'arsip_retur' tidak ditemukan."};
+    }
+    
+    var data = sheetRetur.getDataRange().getValues();
+    var targetSN = sn.toString().trim().toLowerCase();
+    
+    for (var i = 1; i < data.length; i++) {
+      var snCurrent = data[i][2] ? data[i][2].toString().trim().toLowerCase() : "";
+      
+      if (snCurrent === targetSN) {
+        // Pindahkan data ke arsip_retur
+        sheetArsip.appendRow(data[i]);
+        
+        // Hapus dari retur
+        sheetRetur.deleteRow(i + 1);
+        return {success: true, message: "Part berhasil diarsipkan!"};
+      }
+    }
+    
+    return {success: false, message: "Data retur dengan SN tersebut tidak ditemukan."};
+  } catch (error) {
+    return {success: false, message: "Gagal mengarsipkan data retur: " + error.message};
+  }
+}
+
+function archiveCompletedReturServer() {
+  try {
+    var sheetRetur = getSheetByName("retur");
+    var sheetArsip = getSheetByName("arsip_retur");
+    
+    if (!sheetRetur || !sheetArsip) {
+        return {success: false, message: "Sheet 'retur' atau 'arsip_retur' tidak ditemukan."};
+    }
+    
+    var data = sheetRetur.getDataRange().getValues();
+    var count = 0;
+    
+    // Looping dari bawah ke atas agar penghapusan baris tidak merusak indeks loop
+    for (var i = data.length - 1; i >= 1; i--) {
+      var status = data[i][9] ? data[i][9].toString().trim() : "";
+      
+      if (status === 'Y') {
+        sheetArsip.appendRow(data[i]);
+        sheetRetur.deleteRow(i + 1);
+        count++;
+      }
+    }
+    
+    if (count > 0) {
+      return {success: true, message: count + " part berhasil diarsipkan."};
+    } else {
+      return {success: false, message: "Tidak ada part dengan status 'Sudah Diambil' untuk diarsipkan."};
+    }
+    
+  } catch (error) {
+    return {success: false, message: "Gagal mengarsipkan data retur massal: " + error.message};
   }
 }
 
@@ -1093,6 +1247,50 @@ function updateHargaDariExcelServer(payload) {
     
   } catch (error) {
     return {success: false, message: "Error update harga: " + error.message};
+  }
+}
+
+function updateHargaJualDariExcelServer(payload) {
+  try {
+    if (!payload || payload.length === 0) {
+      return {success: false, message: "Payload kosong."};
+    }
+    
+    var sheetBarang = getSheetByName("master_barang");
+    if (!sheetBarang) return {success: false, message: "Sheet 'master_barang' tidak ditemukan."};
+    
+    var dataRangeBarang = sheetBarang.getDataRange();
+    var dataBarang = dataRangeBarang.getValues();
+    
+    var payloadMap = {};
+    for (var i = 0; i < payload.length; i++) {
+      var item = payload[i];
+      if (item.kode_barang) {
+        payloadMap[item.kode_barang.toString().trim().toLowerCase()] = item.harga_jual;
+      }
+    }
+    
+    var updateCountBarang = 0;
+    
+    // Update master_barang
+    // Kolom F (indeks 5) adalah Harga Jual
+    for (var b = 1; b < dataBarang.length; b++) {
+      var kBarang = dataBarang[b][0] ? dataBarang[b][0].toString().trim().toLowerCase() : "";
+      if (kBarang && payloadMap.hasOwnProperty(kBarang)) {
+        dataBarang[b][5] = payloadMap[kBarang]; // Update kolom F (Harga Jual)
+        updateCountBarang++;
+      }
+    }
+    
+    if (updateCountBarang > 0) {
+      dataRangeBarang.setValues(dataBarang);
+      return {success: true, message: updateCountBarang + " baris master barang berhasil diupdate harga jualnya."};
+    } else {
+      return {success: false, message: "Tidak ada data (Kode Barang) yang cocok di master_barang."};
+    }
+    
+  } catch (error) {
+    return {success: false, message: "Error update harga jual: " + error.message};
   }
 }
 
