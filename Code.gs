@@ -1513,3 +1513,25 @@ function deleteRequestCabangServer(id) {
     return {success: false, message: "Gagal menghapus request: " + error.message};
   }
 }
+
+function getActiveRequestCountServer() {
+  try {
+    var sheet = getSheetByName('request_cabang');
+    if (!sheet) return 0;
+    var data = sheet.getDataRange().getValues();
+    var count = 0;
+    var processedIds = {};
+    for (var i = 1; i < data.length; i++) {
+      var id = data[i][0];
+      var status = data[i][7] ? data[i][7].toString().trim().toLowerCase() : '';
+      if (id && !processedIds[id] && status !== 'selesai' && status !== 'ditolak') {
+        count++;
+        processedIds[id] = true;
+      }
+    }
+    return count;
+  } catch (error) {
+    return 0;
+  }
+}
+

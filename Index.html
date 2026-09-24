@@ -235,7 +235,8 @@
           
           <button type="button" onclick="switchView('request')" id="nav-request" class="sidebar-item flex items-center gap-4 px-6 py-3 text-[14px] w-full text-left">
             <i class="fa-solid fa-code-pull-request w-5 text-center"></i>
-            <span class="font-bold">Request Cabang</span>
+            <span class="font-bold flex-1">Request Cabang</span>
+            <span id="sidebar-request-counter" class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full hidden">0</span>
           </button>
           
           <button type="button" onclick="switchView('riwayat')" id="nav-riwayat" class="sidebar-item flex items-center gap-4 px-6 py-3 text-[14px] w-full text-left">
@@ -1491,11 +1492,30 @@
         importStockContainer.style.display = isCabang ? 'none' : 'flex';
       }
 
-      // Tampilkan kolom aksi stok jika Cabang
+    // Tampilkan kolom aksi stok jika Cabang
       const thStockAction = document.getElementById('th-stock-action');
       if (thStockAction) {
         thStockAction.style.display = isCabang ? 'table-cell' : 'none';
       }
+      
+      // Khusus Admin Pusat, update counter request
+      if (!isCabang) {
+        updateSidebarRequestCounter();
+      }
+    }
+    
+    function updateSidebarRequestCounter() {
+      google.script.run.withSuccessHandler(function(count) {
+        const counterEl = document.getElementById('sidebar-request-counter');
+        if (counterEl) {
+          if (count > 0) {
+            counterEl.innerText = count;
+            counterEl.classList.remove('hidden');
+          } else {
+            counterEl.classList.add('hidden');
+          }
+        }
+      }).getActiveRequestCountServer();
     }
 
     function transisiKeAplikasi() {
@@ -2353,14 +2373,15 @@
       let filteredData = {};
       Object.entries(globalSNMasukData).forEach(([groupKey, group]) => {
         // Pencarian pada No Nota
-        let match = group.no_nota.toLowerCase().includes(query);
+        let match = group.no_nota && group.no_nota.toString().toLowerCase().includes(query);
         
         // Pencarian pada Serial Number, Nama Barang, atau Cabang
         if (!match) {
           match = group.items.some(item => 
-            (item.serial_number && item.serial_number.toLowerCase().includes(query)) ||
-            (item.nama_barang && item.nama_barang.toLowerCase().includes(query)) ||
-            (group.alokasi_part && group.alokasi_part.toLowerCase().includes(query))
+            (item.serial_number && item.serial_number.toString().toLowerCase().includes(query)) ||
+            (item.nama_barang && item.nama_barang.toString().toLowerCase().includes(query)) ||
+            (group.alokasi_part && group.alokasi_part.toString().toLowerCase().includes(query)) ||
+            (group.catatan && group.catatan.toString().toLowerCase().includes(query))
           );
         }
         
@@ -4132,6 +4153,10 @@
           
           document.getElementById('search-request').value = '';
           renderRequestCabangTable(groupedRequestCabangData);
+          
+          if (currentUser && currentUser.role.toLowerCase() !== 'cabang') {
+            updateSidebarRequestCounter();
+          }
         } else {
           tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500">' + res.message + '</td></tr>';
         }
