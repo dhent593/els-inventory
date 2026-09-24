@@ -1,19 +1,18 @@
 # ELS Inventory System
 
-Sistem manajemen inventaris berbasis web yang dikembangkan menggunakan **Google Apps Script**, **HTML/JS**, dan **Tailwind CSS**. Sistem ini digunakan untuk melacak masuk/keluarnya stok barang berbasis Serial Number (SN) dan melakukan sinkronisasi dengan data *Accurate*.
+Sistem manajemen inventaris berbasis web yang dikembangkan menggunakan **Google Apps Script**, **HTML/JS**, dan **Tailwind CSS**. Sistem ini digunakan untuk melacak masuk/keluarnya stok barang berbasis Serial Number (SN) dan melakukan sinkronisasi dengan data stok fisik. Aplikasi ini mendukung arsitektur *Role-Based Access Control* (RBAC) dengan pemisahan peran antara **Admin Pusat** dan **Cabang**.
 
 ## 🌟 Fitur Utama
 
-- **Dashboard**: Ringkasan data inventaris dan aktivitas terkini.
+- **Dashboard**: Ringkasan data inventaris dan aktivitas terkini yang disesuaikan berdasarkan Role (Admin Pusat melihat semua statistik, Cabang melihat statistik cabangnya sendiri).
+- **Manajemen User**: Tambah, ubah, dan hapus data user (Admin/Cabang).
 - **Buat SN (Nota)**: Pembuatan nota untuk serial number keluar.
 - **SN Masuk**: Pendaftaran barang dan serial number baru yang masuk ke gudang.
-- **Stock / Pricelist**: Pemantauan stok dan harga barang. Termasuk fitur import Excel untuk sinkronisasi penuh (menggantikan / menimpa data SN).
-- **Request Cabang**: Manajemen permintaan stok dari cabang lain.
-- **Riwayat SN**: Melacak riwayat serial number yang pernah keluar (dalam pengembangan).
-- **Stock Opname**: 
-  - Scan barcode untuk verifikasi ketersediaan stok fisik (ditandai dengan warna hijau jika *ADA*).
-  - Cetak (Print) laporan Stock Opname dalam format kertas A4 (lengkap dengan indikator kolom kosong untuk SN yang belum di-scan, atau centang bila *ADA*).
-  - Sinkronisasi data via Excel.
+- **Stock / Pricelist**: Pemantauan stok dan harga barang. Termasuk fitur import Excel untuk sinkronisasi penuh.
+- **Request Cabang**: Modul interaktif untuk mengelola permintaan alokasi stok dari Cabang ke Admin Pusat. Mendukung sistem *cart*, pengiriman *request* massal, alokasi penuh/sebagian, hingga penolakan.
+- **Riwayat SN**: Melacak riwayat distribusi serial number yang pernah dialokasikan ke cabang.
+- **Stock Opname**: Scan barcode untuk verifikasi ketersediaan stok fisik (ditandai dengan warna hijau jika ADA), serta cetak laporan Stock Opname dalam format kertas A4.
+- **Retur Part**: Manajemen pengembalian komponen bermasalah dari Cabang ke Pusat lengkap dengan fitur arsip.
 
 ## 🛠️ Stack Teknologi
 
@@ -29,44 +28,36 @@ Karena aplikasi ini dibangun di atas ekosistem Google Workspace, instalasinya di
 
 1. **Siapkan Database**:
    - Buat file **Google Sheets** baru di Google Drive Anda.
-   - Buat 4 buah *sheet* (tab di bagian bawah) dengan nama dan urutan kolom (Header di baris 1) sebagai berikut:
+   - Buat *sheet* (tab di bagian bawah) dengan nama-nama berikut untuk struktur datanya:
      
      **a. Sheet `users`** (Digunakan untuk akses login)
-     - Kolom A: `Username`
-     - Kolom B: `Password`
-     - Kolom C: `Role` (misal: ADMIN, PUSAT)
-     - Kolom D: `Cabang`
+     - Kolom A: `Username` | Kolom B: `Password` | Kolom C: `Role` (ADMIN_PUSAT / CABANG) | Kolom D: `Cabang` | Kolom E: `Status`
      
      **b. Sheet `master_barang`** (Pusat data stok dan harga)
-     - Kolom A: `Kode Barang`
-     - Kolom B: `Nama Barang`
-     - Kolom C: `Serial Number` (Kumpulan SN yang ada)
-     - Kolom D: `Stok` (Angka jumlah stok)
-     - Kolom E: `Harga Modal`
-     - Kolom F: `Harga Jual`
+     - Kolom A: `Kode Barang` | Kolom B: `Nama Barang` | Kolom C: `Serial Number` | Kolom D: `Stok` | Kolom E: `Harga Modal` | Kolom F: `Harga Jual`
      
      **c. Sheet `sn_masuk`** (Pencatatan riwayat barang masuk)
-     - Kolom A: `Tanggal`
-     - Kolom B: `No Nota`
-     - Kolom C: `Kode Barang`
-     - Kolom D: `Nama Barang`
-     - Kolom E: `Serial Number`
-     - Kolom F: `Catatan`
-     - Kolom G: `Alokasi Part`
+     - Kolom A: `Tanggal` | Kolom B: `No Nota` | Kolom C: `Kode Barang` | Kolom D: `Nama Barang` | Kolom E: `Serial Number` | Kolom F: `Catatan` | Kolom G: `Alokasi Part`
      
      **d. Sheet `opname`** (Pencatatan proses Stock Opname)
-     - Kolom A: `Kode Barang`
-     - Kolom B: `Nama Barang`
-     - Kolom C: `Serial Number`
-     - Kolom D: `Tanggal Masuk`
-     - Kolom E: `Status` (misal: Belum Scan, ADA)
+     - Kolom A: `Kode Barang` | Kolom B: `Nama Barang` | Kolom C: `Serial Number` | Kolom D: `Tanggal Masuk` | Kolom E: `Status` (misal: Belum Scan, ADA)
+
+     **e. Sheet `request_cabang`** (Daftar permintaan alokasi dari cabang)
+     - Kolom A: `ID Request` | Kolom B: `Tanggal` | Kolom C: `Cabang` | Kolom D: `Row ID` | Kolom E: `Kode Barang` | Kolom F: `Nama Barang` | Kolom G: `Request (Qty)` | Kolom H: `Status` | Kolom I: `Alokasi (Qty)` | Kolom J: `Keterangan`
+
+     **f. Sheet `riwayat_sn`** (Riwayat penyebaran SN ke tiap cabang)
+     - Kolom A: `Tanggal` | Kolom B: `SN` | Kolom C: `Nama Barang` | Kolom D: `Cabang Tujuan` | Kolom E: `ID Request` | Kolom F: `Keterangan`
+
+     **g. Sheet `retur` & `arsip_retur`** (Riwayat pengembalian barang dari cabang)
+     
+     **h. Sheet `master_sn`** (Database master nomor seri)
 
 2. **Buka Apps Script**:
    - Dari dalam Google Sheets tersebut, klik menu **Extensions (Ekstensi)** > **Apps Script**.
 
 3. **Salin Kode File**:
-   - Buat file `Code.gs` dan salin seluruh isi dari backend Anda.
-   - Buat file HTML baru bernama `Index.html` dan salin seluruh struktur antarmukanya.
+   - Buat file `Code.gs` dan salin seluruh isi dari logika server.
+   - Buat file HTML baru bernama `Index.html` dan salin seluruh struktur antarmukanya (berupa arsitektur *Single Page Application*).
 
 4. **Deploy sebagai Web App**:
    - Klik tombol **Deploy (Terapkan)** di kanan atas > **New deployment (Penerapan baru)**.
